@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>メンバー登録</title>
+<link rel="stylesheet" href="css/regist.css">
+
+</head>
+<body>
+
+<div class="regist">
+
+    <div class="title">メンバー登録</div>
+
+    <form id="registForm">
+
+        <div class="row">
+            <div class="input-block">
+                <label>氏</label>
+                <input type="text" id="lastName" name="lastName">
+            </div>
+            <div class="input-block">
+                <label>名</label>
+                <input type="text" id="firstName" name="firstName">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="input-block">
+                <label>パスワード</label>
+                <input type="password" id="password">
+            </div>
+        </div>
+
+        <div class="child-title">中学生以下の子供の名前</div>
+        <div id="childList" class="child-list">
+            <input type="text" class="child-name" placeholder="子供の名前">
+        </div>
+
+        <button type="button" class="add-btn" id="addChildBtn">＋ 子どもを追加</button>
+        <button type="button" id="registBtn">申請</button>
+        <button type="button" class="back-btn" id="backLogin">戻る</button>
+    </form>
+</div>
+
+<script src="js/regist.js"></script>
+</body>
+</html>

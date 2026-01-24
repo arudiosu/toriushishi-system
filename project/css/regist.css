@@ -1,0 +1,118 @@
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+background-color: #b19696;
+font-family: sans-serif;
+}
+
+/* 登録カード（中央配置） */
+.regist {
+width: 90%;
+max-width: 28rem;
+padding: 1.8rem;
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background: #fff;
+border-radius: 15px;
+box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+/* タイトル */
+.title {
+text-align: center;
+font-size: 1.4rem;
+margin-bottom: 1.2rem;
+font-weight: bold;
+color: #333;
+}
+
+/* 氏名行 */
+.row {
+display: flex;
+gap: 10px;
+margin-bottom: 1rem;
+}
+
+/* スマホなら縦並び */
+@media screen and (max-width: 480px) {
+.row {
+    flex-direction: column;
+}
+}
+
+/* 入力ブロック */
+.input-block {
+flex: 1;
+display: flex;
+flex-direction: column;
+font-size: 0.9rem;
+gap: 5px;
+}
+
+.input-block label {
+color: #444;
+}
+
+input {
+padding: 10px;
+font-size: 1rem;
+border-radius: 8px;
+border: 1px solid #ccc;
+width: 100%;
+}
+
+/* 子どもタイトル */
+.child-title {
+margin-top: 1rem;
+font-weight: bold;
+color: #333;
+margin-bottom: 0.3rem;
+}
+
+/* 子供リスト */
+.child-list input {
+width: 100%;
+margin-top: 8px;
+}
+
+/* ボタン */
+.add-btn,
+#registBtn,
+.back-btn {
+width: 100%;
+padding: 12px;
+border: none;
+border-radius: 8px;
+font-size: 1.05rem;
+margin-top: 10px;
+color: #fff;
+}
+
+/* 子供追加ボタン */
+.add-btn {
+background: #4caf50;
+}
+
+/* 登録ボタン */
+#registBtn {
+background: #2196f3;
+}
+
+/* 戻るボタン */
+.back-btn {
+background: #777;
+}
+
+/* ボタンの影 */
+.add-btn:hover,
+#registBtn:hover,
+.back-btn:hover {
+opacity: 0.9;
+cursor: pointer;
+}

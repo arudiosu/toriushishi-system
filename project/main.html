@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+
+</head>
+
+<body>
+
+<div id="loading">
+    <img src="https://lh3.googleusercontent.com/d/1Q5HtRLoFEnyJRuYr4Q4qrono1VWRNY-y" alt="ローディング" class="loading-img rotating">
+</div>
+
+<div id="main-content" style="display:none;">
+    <div class="bottom-nav">
+        <button data-tab="home" class="bottom-nav-btn active">
+            <i class="fas fa-home"></i><span>ホーム</span>
+        </button>
+
+        <button data-tab="event" class="bottom-nav-btn">
+            <i class="fas fa-book-open"></i><span>イベント</span>
+        </button>
+
+        <button data-tab="chat" class="bottom-nav-btn">
+        <i class="fas fa-paw"></i><span>ししまる</span>
+        </button>
+
+        <button data-tab="calendar" class="bottom-nav-btn">
+            <i class="fas fa-calendar-alt"></i><span>カレンダー</span>
+        </button>
+
+        <button data-tab="user" class="bottom-nav-btn">
+            <i class="fas fa-user"></i><span>ユーザー</span>
+        </button>
+    </div>
+</div>
+
+<!-- 詳細カード HTML -->
+<div id="hidecontents">
+<div class="event-detail-card" id="eventDetailCard">
+
+    <div class="loading-overlay" style="display:none;">
+    <img src="https://lh3.googleusercontent.com/d/1zgT7_40uY2uEuM9yt7AyeFdVRLZtOvAW" alt="読み込み中…" />
+    </div>
+
+    <button class="close-event-detail-card-btn">戻る</button>
+
+    <!-- タイトル -->
+    <div class="event-detail-card-title"></div>
+
+    <!-- 日付・時間 -->
+    <div class="event-detail-card-time">
+    <div class="event-detail-card-date"></div>
+    <div class="event-detail-card-time-text"></div>
+    </div>
+
+    <!-- 参加・不参加ボタン＋折りたたみリスト -->
+    <div class="event-detail-card-responses">
+    <!-- 自分用回答ボタン -->
+    <div class="response-btn-group">
+        <button class="response-btn yes">参加</button>
+        <button class="response-btn no">不参加</button>
+    </div>
+
+    <!-- 折りたたみリスト -->
+    <div class="response-section yes">
+        <button class="toggle-response-btn yes">参加者</button>
+        <ul class="response-list yes"></ul>
+    </div>
+
+    <div class="response-section no">
+        <button class="toggle-response-btn no">不参加者</button>
+        <ul class="response-list no"></ul>
+    </div>
+
+    <div class="response-section na">
+        <button class="toggle-response-btn na">未回答者</button>
+        <ul class="response-list na"></ul>
+    </div>
+
+    <!-- 演目リスト -->
+    <button class="toggle-performances-btn">演目一覧</button>
+    <ul class="performance-list"></ul>
+    </div>
+</div>
+
+<div class="user-detail-card">
+</div>
+
+
+</div>
+</div>
+
+<!-- ==== ホーム画面 ==== -->
+<div class="tab-content active" id="home">
+    <div class="nav-title">
+        <h1>ホーム</h1>
+        <!-- 再読み込みボタン -->
+        <button class="reload-btn" title="更新">
+        <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+    <div class="contents">
+    <div class="event-status">進行中のイベント</div>
+    <div id="home-schedule"></div>
+    </div>
+</div>
+
+<!-- ==== イベント画面 ==== -->
+<div class="tab-content" id="event">
+    <div  class="nav-title">
+        <h1>イベント</h1>
+            <!-- 再読み込みボタン -->
+        <button class="reload-btn" title="更新">
+        <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+    <div class="contents">
+    <div class="event-status">進行中のイベント</div>
+    <div id="event-active-schedule"></div>
+    <div class="event-status">過去のイベント</div>
+    <div id="event-past-schedule"></div> 
+    </div>
+</div>
+
+<!-- ===== AIチャット画面 ===== -->
+<div class="tab-content" id="chat">
+<div class="nav-title">
+    <h1>ししまる</h1>
+</div>
+
+<div class="contents">
+<div id="ai-chat-area">
+    <!-- ユーザーメッセージ -->
+    <div class="chat-msg user-msg"></div>
+
+    <!-- AIメッセージ -->
+    <div class="chat-msg ai-msg"></div>
+</div>
+
+
+<div class="chat-input-area">
+    <input type="text" id="chat-input" placeholder="メッセージを入力">
+    <button id="chat-send-btn">送信</button>
+</div>
+</div>
+</div>
+
+<!-- ==== カレンダー画面 ==== -->
+<div class="tab-content" id="calendar">
+    <div  class="nav-title">
+        <h1>カレンダー</h1>
+            <!-- 再読み込みボタン -->
+        <button class="reload-btn" title="更新">
+        <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ==== ユーザー画面 ==== -->
+<div class="tab-content" id="user">
+    <div  class="nav-title">
+        <h1>ユーザー</h1>
+            <!-- 再読み込みボタン -->
+        <button class="reload-btn" title="更新">
+        <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+    <div class="contents">
+    <div class="menu">
+        <ul class="tab-list">
+        <li class="tab-item" data-target="member">メンバー</li>
+        </ul>
+    </div>
+    </div>
+</div>
+
+
+<script src="js/main.js"></script>
+</body>
+</html>
+

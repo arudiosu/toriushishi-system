@@ -1,0 +1,624 @@
+body {
+font-size: 16px; /* 基本サイズを16pxに */
+}
+
+
+#loading {
+    position: fixed;
+    z-index: 9999;
+    background: #D32F2F;
+    width: 100vw;
+    height: 100vh;
+    top: 0; left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s;
+    }
+    .loading-img {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    display: block;
+    }
+    .rotating {
+    animation: spin 1s linear infinite;
+    }
+    /* ローディング後に表示されるメインコンテンツ */
+    #main-content {
+    display: none;
+    position: relative;
+    z-index: auto;
+    padding: 40px;
+    text-align: center;
+}
+
+.reload-btn {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background-color: #6e6e6e;
+    color: #fff;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.reload-btn:hover {
+    background-color: #8a8a8a;
+}
+
+.reload-btn i {
+    pointer-events: none; /* アイコンをクリック対象外に */
+}
+
+.tab-content {
+    display: none;
+    position: relative;
+    z-index: auto;
+    top: 5px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+
+/* --- ボトムナビ --- */
+.bottom-nav {
+    position: fixed;
+    bottom: 0; /* ここを 0 にすることが重要 */
+    left: 0;
+    width: 100%;
+    height: calc(5rem + env(safe-area-inset-bottom)); /* ホームバー分を確保 */
+    padding-bottom: env(safe-area-inset-bottom);
+    display: flex;
+    justify-content: space-around;
+    background-color: #ffffff;
+    z-index: 20;
+}
+
+/* --- ボタン --- */
+.bottom-nav-btn {
+    flex: 1;
+    border: none;
+    background-color: #3a3a3a;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.bottom-nav-btn.active i {
+    background-color: #6e6e6e;
+}
+.bottom-nav-btn i {
+    font-size: 1.5rem;
+    margin-bottom: 2px;
+    background-color: #3a3a3a;
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 20px; /* ← 角丸 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.nav-title {
+    display: block;
+    width: 100%;
+    height: 10%;
+    position: fixed;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    z-index: 20;
+    background-color: #3a3a3a;
+}
+
+.nav-title h1 {
+    margin: 0;
+}
+
+
+body {
+    background-color: #222222;
+    color: #FFFFFF;
+    margin: 0;
+    height: 100dvh; /* iPhoneのアドレスバー変動に対応 */
+}
+
+/* スケルトン共通 */
+.skeleton {
+background-color: #333;
+border-radius: 12px;
+position: relative;
+overflow: hidden;
+}
+
+/* 光のアニメーション */
+.skeleton::after {
+content: "";
+position: absolute;
+top: 0; left: -150px;
+width: 150px; height: 100%;
+background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+0% { left: -150px; }
+100% { left: 100%; }
+}
+
+/* スケルトンカードのサイズ */
+.skeleton-card {
+height: 90px;
+margin: 12px auto;
+width: 85%;
+border-radius: 20px;
+}
+
+
+/*====================================
+        AIチャットタブデザイン
+====================================*/
+
+/* 入力欄をボトムナビの上に固定 */
+.chat-input-area {
+position: fixed;
+bottom: 5rem; /* ボトムナビの高さ分上に */
+left: 0;
+width: 100%;
+display: flex;
+padding: 10px;
+background-color: #111;
+gap: 8px;
+border-top: 1px solid #333;
+z-index: 15; /* ボトムナビより上に表示 */
+box-sizing: border-box; /* パディング込みで幅100% */
+}
+
+/* 入力欄内 */
+#chat-input {
+flex: 1 1 auto;   /* 残り幅を自動調整 */
+min-width: 0;     /* overflow防止 */
+padding: 10px 16px;
+font-size: 16px;
+border-radius: 20px;
+border: none;
+background-color: #222;
+color: #fff;
+box-sizing: border-box; /* パディング込みで幅計算 */
+}
+
+/* 送信ボタン */
+#chat-send-btn {
+flex: 0 0 auto;   /* 幅をテキスト＋paddingに固定 */
+padding: 0 16px;
+border-radius: 20px;
+border: none;
+background-color: #007aff;
+color: #fff;
+cursor: pointer;
+box-sizing: border-box;
+}
+
+
+#chat-send-btn:hover {
+background-color: #005fbb;
+}
+
+/* メッセージエリアの高さを調整 */
+#ai-chat-area {
+flex: 1;
+overflow-y: auto;
+padding: 12px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+scroll-behavior: smooth;
+
+/* 入力欄が固定されるので、その分余白を下に確保 */
+padding-bottom: calc(5rem + 60px); /* ボトムナビ + 入力欄の高さ */
+}
+
+/* 既存のバブルデザイン */
+.chat-msg {
+padding: 10px 14px;
+border-radius: 20px;
+max-width: 70%;
+word-break: break-word;
+display: inline-block;
+}
+
+/* AIメッセージ用の親コンテナ */
+.chat-ai-wrapper {
+display: flex;
+align-items: flex-start;
+gap: 8px;
+margin-bottom: 12px;
+}
+
+/* AIアイコン */
+.chat-ai-wrapper .icon-img {
+width: 32px;
+height: 32px;
+border-radius: 50%;
+object-fit: cover;
+}
+
+
+/* ユーザー側メッセージ（右寄せ） */
+.chat-user {
+align-self: flex-end;
+background-color: #007aff; /* 青 */
+color: #fff;
+border-radius: 20px 20px 0 20px; /* 右上丸め */
+margin-left: auto;
+margin-right: 10px;
+}
+
+/* AI側メッセージ（左寄せ） */
+.chat-ai {
+align-self: flex-start;
+background-color: #333; /* ダークグレー */
+color: #fff;
+border-radius: 20px 20px 20px 0; /* 左上丸め */
+margin-right: auto;
+margin-left: 10px;
+}
+
+/* スクロールを最新に自動で追従（JSでscrollTop制御） */
+#ai-chat-area {
+overflow-y: auto;
+display: flex;
+flex-direction: column;
+gap: 10px;
+padding: 12px;
+padding-bottom: calc(5rem + 60px);
+scroll-behavior: smooth;
+}
+
+
+/*====================================
+        イベントカードデザイン
+====================================*/
+#home-schedule {
+    display: block;
+    position: relative; /* 親に従う通常フロー */
+    width: 100%;
+    height: 100%;
+    padding-bottom: 80px; /* bottom-nav の分 */
+    z-index: 0;
+}
+
+.event-festival, .event-regular {
+    display: flex;
+    flex-direction: column;  /* ← これで縦並びに */
+    justify-content: center;
+    width: 85%;
+    min-height: 90px;
+    margin: 12px auto;
+    padding: 12px 16px 16px;
+    border-radius: 20px;
+    position: relative;
+    color: #fff;
+
+    /* 浮かせる影（アプリ感UP） */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+
+    /* テキストを見やすく */
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+/* 左のカラーアクセントライン */
+.event-festival::before,
+.event-regular::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    border-radius: 20px 0 0 20px;
+    opacity: 0.8;
+}
+
+/* 色 */
+.event-festival {
+    background: #7a1515;
+}
+.event-festival::before {
+    background: #ff4a4a;
+}
+
+.event-regular {
+    background: #1f2f7f;
+}
+.event-regular::before {
+    background: #4d7cff;
+}
+
+.event-status {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+/* 日付 */
+.event-date {
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+/* タイトル */
+.event-title {
+    position: relative;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 4px 0 6px;
+    left: 0; top: 0;
+}
+
+/* 回答状況 */
+.responses-list {
+    position: relative;
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-top: 4px;
+    left: 0; bottom: 0;
+}
+
+/* 自分の回答（右上にバッジみたいに配置） */
+.answer {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+/* 詳細ボタン（右下にタグ風） */
+.detail {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    background: rgba(255,255,255,0.2);
+    padding: 6px 14px;
+    border-radius: 10px;
+    border: none;
+    color: #fff;
+    backdrop-filter: blur(6px);
+    transition: 0.2s;
+}
+
+.detail:hover {
+    background: rgba(255,255,255,0.35);
+}
+
+/* =======================================================
+イベント詳細カード
+======================================================= */
+.loading-overlay {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: #1e1e1e;
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 100;
+}
+.loading-overlay img {
+width: 120px; /* 適宜調整 */
+height: 120px;
+}
+
+.event-detail-card {
+    position: fixed;
+    inset: 0;
+    background: #1e1e1e;
+    z-index: 99;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 70px 24px 24px;
+    gap: 16px;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    transform: translateY(100%);
+    transition: transform 0.45s ease-out;
+    overflow-y: auto;
+}
+.event-detail-card.active { transform: translateY(0); }
+
+/* タイトル */
+.event-detail-card-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-top: 4px;
+    border-left: 4px solid #ff7676;
+    padding-left: 12px;
+}
+
+/* 日付・時間 */
+.event-detail-card-time {
+    padding: 16px;
+    background: #2c2c2c;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.event-detail-card-date { color: #bbbbbb; font-size: 1.2rem; }
+.event-detail-card-time-text { font-size: 1.2rem; color: #fff; }
+
+/* =======================================================
+参加・不参加・未回答ボタン
+======================================================= */
+.event-detail-card-responses {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 横並びボタン */
+.response-btn-group {
+    display: flex;
+    gap: 12px;
+}
+.response-btn-group .response-btn {
+    flex: 1;             /* 2列で幅を均等に */
+    font-size: 1rem;
+    padding: 12px 0;
+}
+
+/* ボタン共通 */
+.response-btn {
+    width: 100%;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    transition: 0.2s;
+}
+.response-btn.selected { transform: scale(1.05); }
+
+/* 色 */
+.response-btn.yes { background-color: #7CFF8A; }
+.response-btn.yes.selected { background-color: #00D83A; box-shadow: 0 0 10px rgba(0,255,80,0.7); }
+.response-btn.no  { background-color: #FF6E6E; }
+.response-btn.no.selected  { background-color: #FF2B2B; box-shadow: 0 0 10px rgba(255,80,80,0.7); }
+.response-btn.na  { background-color: #999; }
+.response-btn.na.selected { background-color: #555; }
+
+/* 折りたたみリスト */
+.response-list {
+    max-height: 250px;
+    overflow-y: auto;
+    list-style: none;
+    padding-left: 0;
+    margin: 4px 0 12px 0;
+}
+.response-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    background: #1f1f1f;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    font-size: 1rem;
+    color: #fff;
+}
+.response-list li .count {
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+/* 折りたたみボタン */
+.toggle-response-btn, .toggle-performances-btn {
+    width: 100%;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.3s;
+}
+.toggle-response-btn:hover, .toggle-performances-btn:hover { background: #444; }
+.toggle-response-btn.open::after, .toggle-performances-btn.open::after { content: "▲"; float: right; }
+.toggle-response-btn::after, .toggle-performances-btn::after { content: "▼"; float: right; }
+
+/* =======================================================
+演目リスト
+======================================================= */
+.performance-list {
+    max-height: 300px;
+    overflow-y: auto;
+    list-style: none;
+    padding-left: 0;
+    margin-top: 4px;
+}
+.performance-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    background: #1f1f1f;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    font-size: 1rem;
+    color: #fff;
+}
+.performance-list li .performance-name { font-weight: bold; }
+.performance-list li .assigned { font-size: 0.95rem; opacity: 0.85; }
+
+/* 戻るボタン */
+.close-event-detail-card-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 6px 16px;
+    font-size: 1rem;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    width: auto;
+    max-width: 150px;
+    z-index: 101;
+}
+.close-event-detail-card-btn:hover { background: #444; }
+
+/* =======================================================
+レスポンシブ
+======================================================= */
+@media (max-width: 480px) {
+    .event-detail-card { padding: 60px 16px 16px; }
+    .response-btn, .response-list li, .performance-list li { font-size: 0.95rem; padding: 8px 10px; }
+    .event-detail-card-title { font-size: 1.5rem; padding-left: 8px; }
+}
+
+/* 選択時にチェックマークを追加 */
+.response-btn.selected::after {
+    content: " ✔";
+    font-size: 1rem;
+    margin-left: 8px;
+}
+
