@@ -21,14 +21,13 @@ if (loginBtn) {
 
     try {
         const res = await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "login", username, password }),
-        mode: "cors"
+            method: "POST",
+            // mode: "cors" は省略可（デフォルト）、headersも text/plain でOK
+            body: JSON.stringify({ action: "login", username, password })
         });
 
-        const text = await res.text();
-        const data = JSON.parse(text); // HtmlService は text で返すので parse
+        // GASが正常にレスポンスを返せば、ここで直接JSONとして受け取れます
+        const data = await res.json(); 
         console.log(data);
 
         if (data.success) {
