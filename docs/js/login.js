@@ -3,7 +3,7 @@ const loginBtn = document.getElementById("loginBtn");
 const gotoRegist = document.getElementById("gotoRegist");
 const message = document.getElementById("message");
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyzeUMTM_AK_8v00OUNz_BivDg-tL8GBhQclvMkUjLO5v60Xy4MlfyNjBev1xMT4gEj/exec"; // ←置き換え
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyzeUMTM_AK_8v00OUNz_BivDg-tL8GBhQclvMkUjLO5v60Xy4MlfyNjBev1xMT4gEj/exec"; // ←デプロイURLに置き換え
 
 if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
@@ -23,10 +23,12 @@ if (loginBtn) {
         const res = await fetch(GAS_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "login", username, password })
+        body: JSON.stringify({ action: "login", username, password }),
+        mode: "cors"
         });
 
-        const data = await res.json();
+        const text = await res.text();
+        const data = JSON.parse(text); // HtmlService は text で返すので parse
         console.log(data);
 
         if (data.success) {
