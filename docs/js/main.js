@@ -7,25 +7,9 @@ const eventPastScheduleContainer = document.getElementById("event-past-schedule"
 let scheduleContainer = [];
 let eventMap = {}; 
 
-// ★ ここにあなたのデプロイURLを入れる
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyzeUMTM_AK_8v00OUNz_BivDg-tL8GBhQclvMkUjLO5v60Xy4MlfyNjBev1xMT4gEj/exec";
 const userId = localStorage.getItem("userId");
 const role = localStorage.getItem("role");
 
-/* =======================================================
-共通 API 呼び出し関数 (CORS回避 & 共通化)
-======================================================= */
-async function callGasApi(payload) {
-    // headers を完全に削除、または指定しないのがコツです
-    const response = await fetch(GAS_URL, {
-        method: "POST",
-        body: JSON.stringify(payload) 
-    });
-
-    // 実は GAS + fetch はレスポンスを直接 json() で取れない場合が多いです
-    // 一旦以下の構成で試してください
-    return await response.json(); 
-}
 
 /* =======================================================
 初期処理
@@ -349,12 +333,37 @@ function initChatBot() {
         }
     }
 
-    function createTypingIndicator() {
-        const wrapper = document.createElement("div");
-        wrapper.className = "chat-ai-wrapper";
-        wrapper.innerHTML = `<img class="icon-img" src="images/鳥生獅子連_ししまる.PNG"><div class="chat-msg chat-ai">入力中...</div>`;
-        return wrapper;
-    }
+function createTypingIndicator() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "chat-ai-wrapper";
+
+    const icon = `<img class="icon-img" src="images/鳥生獅子連_ししまる.PNG">`;
+
+    const msg = document.createElement("div");
+    msg.className = "chat-msg chat-ai";
+
+    // 初期状態
+    msg.textContent = "入力中";
+
+    wrapper.innerHTML = icon;
+    wrapper.appendChild(msg);
+
+    // ドットアニメーション
+    let dotCount = 0;
+    const intervalId = setInterval(() => {
+        dotCount = (dotCount + 1) % 4; // 0→1→2→3→0
+        msg.textContent = "入力中" + ".".repeat(dotCount);
+    }, 400);
+
+    // remove() されたときアニメ停止
+    const originalRemove = wrapper.remove;
+    wrapper.remove = function () {
+        clearInterval(intervalId);
+        originalRemove.call(this);
+    };
+
+    return wrapper;
+}
 
     function appendChatMessage(text, sender) {
         const msgDiv = document.createElement("div");
