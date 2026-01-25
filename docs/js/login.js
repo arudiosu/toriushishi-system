@@ -34,6 +34,7 @@ if (loginBtn) {
         localStorage.setItem("role", data.role);
         localStorage.setItem("username", data.username);
         localStorage.setItem("children", JSON.stringify(data.children || []));
+        localStorage.setItem("isLoggedIn", "true");
         location.href = "main.html";
         } else {
         message.textContent = data.msg;

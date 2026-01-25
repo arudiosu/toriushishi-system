@@ -27,12 +27,14 @@ font-size: 16px; /* 基本サイズを16pxに */
     }
     /* ローディング後に表示されるメインコンテンツ */
     #main-content {
-    display: none;
-    position: relative;
-    z-index: auto;
-    padding: 40px;
-    text-align: center;
-}
+        display: none;
+        position: relative;
+        z-index: auto;
+        padding: 40px;
+        text-align: center;
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ボトムナビの高さ分 */
+    }
+
 
 .reload-btn {
     position: absolute;
