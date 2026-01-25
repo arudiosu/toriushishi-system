@@ -212,15 +212,26 @@ function initEventDelegation() {
         }
 
         // 折りたたみ
-        const toggleBtn = event.target.closest(".toggle-response-btn, .toggle-performances-btn");
-        if (toggleBtn) {
-            const ul = toggleBtn.nextElementSibling;
-            if(!ul) return;
+        const toggleResponseBtn = event.target.closest(".toggle-response-btn, .toggle-performances-btn");
+        if (toggleResponseBtn) {
+            const ul = toggleResponseBtn.nextElementSibling;
+            if (!ul) return;
             const isOpen = ul.style.display === "block";
             ul.style.display = isOpen ? "none" : "block";
-            toggleBtn.classList.toggle('open', !isOpen);
-            return;
+            toggleResponseBtn.classList.toggle('open', !isOpen);
         }
+
+        // 子供用折りたたみ
+        const toggleChildrenBtn = event.target.closest(".toggle-children-btn");
+        if (toggleChildrenBtn) {
+            const ul = toggleChildrenBtn.nextElementSibling;
+            if (!ul) return;
+            const isOpen = ul.style.display === "block";
+            ul.style.display = isOpen ? "none" : "block";
+            toggleChildrenBtn.classList.toggle('open', !isOpen);
+        }
+
+
 
         // 回答
         const responseBtn = event.target.closest(".response-btn");
@@ -237,12 +248,102 @@ function initEventDelegation() {
             return;
         }
 
-        // 詳細閉じる
-        if (event.target.closest(".close-event-detail-card-btn")) {
-            document.getElementById("eventDetailCard")?.classList.remove("active");
+        // 詳細閉じる（data-targetを利用したケース形式）
+        const closeTarget = event.target.closest(".close-card-btn");
+        if (closeTarget) {
+            // data-targetで閉じる対象を取得
+            const targetType = closeTarget.dataset.target; // "event", "member" など
+
+            switch (targetType) {
+                case "event":
+                    document.getElementById("eventDetailCard")?.classList.remove("active");
+                    break;
+                case "member":
+                    document.getElementById("membersCard")?.classList.remove("active");
+                    break;
+                default:
+                    // data-target が無い場合や想定外
+                    break;
+            }
         }
     });
 }
+
+/* =======================================================
+    メンバー詳細カードを開く（あなたのHTML形式に対応）
+======================================================= */
+document.querySelector('[data-target="member"]').addEventListener('click', async () => {
+    
+    const card = document.getElementById("membersCard");
+    card.classList.add("active"); // スライドイン
+
+    await loadMembers(); // APIからメンバー取得
+});
+
+// メンバー取得関数
+async function loadMembers() {
+    const card = document.getElementById("membersCard");
+    const overlay = card.querySelector(".loading-overlay");
+    if (overlay) overlay.style.display = "flex";
+
+    const res = await callGasApi({ action: "getMembers" });
+    if (!res.success) {
+        if (overlay) overlay.style.display = "none";
+        return;
+    }
+
+    const list = document.getElementById("memberList");
+    list.innerHTML = "";
+
+    res.members.forEach(member => {
+        // 親がactiveでない場合はスキップ
+        if (member.status !== "active") return;
+
+        // 子供がactiveのものだけにフィルタ
+        const activeChildren = (member.children || []).filter(child => child.status === "active");
+
+        // 子供がいなくても li を表示する場合は activeChildren.length === 0 でもOK
+        // もし「子供が1人もactiveでなければ親も表示しない」なら以下の条件を追加
+        // if (activeChildren.length === 0) return;
+
+        const li = document.createElement("li");
+        li.textContent = member.name;
+        li.classList.add("member-item");
+
+        if (activeChildren.length > 0) {
+            const details = document.createElement("details");
+            details.classList.add("children-details");
+
+            const summary = document.createElement("summary");
+
+            const nameSpan = document.createElement("span");
+            nameSpan.textContent = "子供"; // ここにアイコンや文字もOK
+            summary.appendChild(nameSpan);
+
+            details.appendChild(summary);
+
+            const childList = document.createElement("ul");
+            childList.classList.add("children-list");
+
+            activeChildren.forEach(child => {
+                const childLi = document.createElement("li");
+                childLi.textContent = child.childName;
+                childList.appendChild(childLi);
+            });
+
+            details.appendChild(childList);
+            li.appendChild(details);
+        }
+
+
+        list.appendChild(li);
+    });
+
+    if (overlay) overlay.style.display = "none";
+}
+
+
+
 
 /* =======================================================
 API 連携ロジック (回答更新 & 詳細表示)

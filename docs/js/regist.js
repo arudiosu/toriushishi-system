@@ -51,9 +51,7 @@ document.getElementById("registBtn").addEventListener("click", async () => {
     btn.textContent = "申請中...";
 
     try {
-        // ★ 共通 API を使う形に変更！
         const result = await callGasApi(form);
-
         if (result.success) {
             alert("申請を行いました。承認されるまでお待ちください。");
             window.location.href = "index.html";

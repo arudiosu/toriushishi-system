@@ -33,6 +33,7 @@ if (loginBtn) {
         localStorage.setItem("userId", data.userId);
         localStorage.setItem("role", data.role);
         localStorage.setItem("username", data.username);
+        localStorage.setItem("children", JSON.stringify(data.children || []));
         location.href = "main.html";
         } else {
         message.textContent = data.msg;
