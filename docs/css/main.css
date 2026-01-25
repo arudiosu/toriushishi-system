@@ -1,6 +1,24 @@
 body {
-font-size: 16px; /* 基本サイズを16pxに */
+    font-size: 16px; /* 基本サイズを16pxに */
+    background-color: #222222;
+    color: #FFFFFF;
+    margin: 0;
+    height: 100dvh; /* iPhoneのアドレスバー変動に対応 */
 }
+
+#version {
+    position: fixed;
+    top: 40px;               /* ナビの下あたりにずらす */
+    right: 10px;
+    background-color: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    z-index: 999;             /* nav-title(20)より低く */
+    font-family: sans-serif;
+}
+
 
 
 #loading {
@@ -136,12 +154,7 @@ font-size: 16px; /* 基本サイズを16pxに */
 }
 
 
-body {
-    background-color: #222222;
-    color: #FFFFFF;
-    margin: 0;
-    height: 100dvh; /* iPhoneのアドレスバー変動に対応 */
-}
+
 
 /* スケルトン共通 */
 .skeleton {
