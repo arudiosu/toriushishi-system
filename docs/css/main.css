@@ -8,14 +8,14 @@ body {
 
 #version {
     position: fixed;
-    top: 40px;               /* ナビの下あたりにずらす */
+    top: 50px;               /* ナビの下あたりにずらす */
     right: 10px;
     background-color: rgba(0,0,0,0.6);
     color: #fff;
     font-size: 12px;
     padding: 4px 8px;
     border-radius: 6px;
-    z-index: 999;             /* nav-title(20)より低く */
+    z-index: 999;        
     font-family: sans-serif;
 }
 
@@ -33,25 +33,23 @@ body {
     justify-content: center;
     align-items: center;
     transition: opacity 0.5s;
-    }
-    .loading-img {
+}
+.loading-img {
     width: 120px;
     height: 120px;
     object-fit: contain;
     display: block;
-    }
-    .rotating {
-    animation: spin 1s linear infinite;
-    }
-    /* ローディング後に表示されるメインコンテンツ */
-    #main-content {
-        display: none;
-        position: relative;
-        z-index: auto;
-        padding: 40px;
-        text-align: center;
-        padding-bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ボトムナビの高さ分 */
-    }
+}
+
+/* ローディング後に表示されるメインコンテンツ */
+#main-content {
+    display: none;
+    position: relative;
+    z-index: auto;
+    padding: 40px;
+    text-align: center;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ボトムナビの高さ分 */
+}
 
 
 .reload-btn {
@@ -98,7 +96,7 @@ body {
     bottom: 0; /* ここを 0 にすることが重要 */
     left: 0;
     width: 100%;
-    height: calc(5rem + env(safe-area-inset-bottom)); /* ホームバー分を確保 */
+    height: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ホームバー分を確保 */
     padding-bottom: env(safe-area-inset-bottom);
     display: flex;
     justify-content: space-around;
