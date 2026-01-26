@@ -75,25 +75,24 @@
 
 <!-- ===== AIチャット画面 ===== -->
 <div class="tab-content" id="chat">
-<div class="nav-title">
-    <h1>ししまる</h1>
-</div>
+    <div class="nav-title">
+        <h1>ししまる</h1>
+    </div>
 
-<div class="contents">
-<div id="ai-chat-area">
-    <!-- ユーザーメッセージ -->
-    <div class="chat-msg user-msg"></div>
+    <div class="contents">
+        <div id="ai-chat-area">
+            <!-- ユーザーメッセージ -->
+            <div class="chat-msg user-msg"></div>
 
-    <!-- AIメッセージ -->
-    <div class="chat-msg ai-msg"></div>
-</div>
+            <!-- AIメッセージ -->
+            <div class="chat-msg ai-msg"></div>
+        </div>
 
-
-<div class="chat-input-area">
-    <input type="text" id="chat-input" placeholder="メッセージを入力">
-    <button id="chat-send-btn">送信</button>
-</div>
-</div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="メッセージを入力">
+            <button id="chat-send-btn">送信</button>
+        </div>
+    </div>
 </div>
 
 <!-- ==== カレンダー画面 ==== -->
@@ -137,7 +136,7 @@
             <section class="section">
                 <p class="section-title">管理者メニュー</p>
                 <ul class="tab-list">
-                    <li class="tab-item" data-target="event-member">メンバー管理</li>
+                    <li class="tab-item" data-target="member-management">メンバー管理</li>
                     <li class="tab-item" data-target="event-management">イベント管理</li>
                 </ul>
             </section>
@@ -162,6 +161,7 @@
         <div class="event-detail-card-time">
         <div class="event-detail-card-date"></div>
         <div class="event-detail-card-time-text"></div>
+        <div class="event-detail-card-location"></div>
         </div>
 
         <!-- 参加・不参加ボタン＋折りたたみリスト -->
@@ -194,8 +194,60 @@
         </div>
     </div>
 
+    <!-- イベント新規作成 -->
+    <div class="event-create-card" id="eventCreateCard">
+
+        <div class="loading-overlay" style="display:none;">
+            <img src="images/鳥生獅子連_詳細ローディング.gif" alt="読み込み中…" />
+        </div>
+
+        <!-- 戻るボタン -->
+        <button class="close-card-btn" data-target="create">戻る</button>
+
+        <!-- イベントタイプ入力 -->
+        <div class="event-create-card-type">
+            <label>イベントタイプ</label>
+            <div class="event-type-options">
+                <label><input type="radio" name="eventType" value="祭り" checked /> 祭り</label>
+                <label><input type="radio" name="eventType" value="イベント" /> イベント</label>
+            </div>
+        </div>
+
+        <!-- タイトル入力 -->
+        <div class="event-create-card-title">
+            <label for="eventTitle">タイトル</label>
+            <input type="text" id="eventTitle" placeholder="イベントタイトルを入力" />
+        </div>
+
+        <!-- 日付・時間入力 -->
+        <div class="event-create-card-time">
+            <label for="eventDate">日付</label>
+            <input type="date" id="eventDate" />
+            <label for="eventTime">時間</label>
+            <input type="time" id="eventTime" />
+        </div>
+
+        <!-- 場所入力 -->
+        <div class="event-create-card-location">
+            <label for="eventLocation">場所</label>
+            <input type="text" id="eventLocation" placeholder="場所を入力" />
+        </div>
+
+        <!-- 演目入力 -->
+        <div class="event-create-card-performances">
+            <label>演目</label>
+            <div id="performanceList"></div>
+            <button type="button" id="addPerformanceBtn">演目を追加</button>
+        </div>
+
+
+        <!-- 保存ボタン -->
+        <button class="save-event-btn">保存</button>
+    </div>
+
+
     <!-- ==============================
-        メンバー一覧表示 + モーダル
+        メンバーカード（共通）
     ============================== -->
     <div class="member-card" id="membersCard">
 
@@ -204,7 +256,11 @@
         </div>
 
         <button class="close-card-btn" data-target="member">戻る</button>
-        <h2>メンバー一覧</h2>
+
+        <!-- タイトルはJSで切り替えるとさらに親切 -->
+        <h2 id="memberCardTitle">メンバー一覧</h2>
+
+        <!-- 一覧 -->
         <ul id="memberList"></ul>
 
     </div>

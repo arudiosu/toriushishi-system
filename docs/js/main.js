@@ -261,6 +261,9 @@ function initEventDelegation() {
                 case "member":
                     document.getElementById("membersCard")?.classList.remove("active");
                     break;
+                case "create":
+                    document.getElementById("eventCreateCard")?.classList.remove("active");
+                    break;
                 default:
                     // data-target が無い場合や想定外
                     break;
@@ -272,21 +275,50 @@ function initEventDelegation() {
 /* =======================================================
     メンバー詳細カードを開く（あなたのHTML形式に対応）
 ======================================================= */
-document.querySelector('[data-target="member"]').addEventListener('click', async () => {
-    
-    const card = document.getElementById("membersCard");
-    card.classList.add("active"); // スライドイン
+// タブクリック処理
+document.querySelectorAll(".tab-item").forEach(tab => {
+    tab.addEventListener("click", async () => {
 
-    await loadMembers(); // APIからメンバー取得
+        const targetTab = tab.dataset.target;
+        const card = document.getElementById("membersCard");
+
+        // 一般メンバー
+        if (targetTab === "member") {
+            card.classList.add("active");
+            await loadMembersUser();
+            return;
+        }
+
+        // 管理者メンバー管理
+        if (targetTab === "member-management") {
+            if (role !== "admin") {
+                alert("管理者のみアクセスできます。");
+                return;
+            }
+            card.classList.add("active");
+            await loadMembersAdmin();
+            return;
+        }
+
+        // 新規作成カード
+        if (targetTab === "event-management") {
+            const card = document.getElementById("eventCreateCard");
+            card.classList.add("active");
+            // 必要なら初期化関数を呼ぶ
+            initEventCreateCard();
+            return;
+        }
+    });
 });
 
 // メンバー取得関数
-async function loadMembers() {
+async function loadMembersUser() {
     const card = document.getElementById("membersCard");
     const overlay = card.querySelector(".loading-overlay");
     if (overlay) overlay.style.display = "flex";
 
-    const res = await callGasApi({ action: "getMembers" });
+    const res = await callGasApi({ action: "getMembers", role: "user" });
+
     if (!res.success) {
         if (overlay) overlay.style.display = "none";
         return;
@@ -295,37 +327,25 @@ async function loadMembers() {
     const list = document.getElementById("memberList");
     list.innerHTML = "";
 
-    res.members.forEach(member => {
-        // 親がactiveでない場合はスキップ
-        if (member.status !== "active") return;
+    // ★★ ここでフィルタリング（承認待ちは表示しない）
+    const activeMembers = res.members.filter(m => m.status === "active");
 
-        // 子供がactiveのものだけにフィルタ
-        const activeChildren = (member.children || []).filter(child => child.status === "active");
-
-        // 子供がいなくても li を表示する場合は activeChildren.length === 0 でもOK
-        // もし「子供が1人もactiveでなければ親も表示しない」なら以下の条件を追加
-        // if (activeChildren.length === 0) return;
-
+    activeMembers.forEach(member => {
         const li = document.createElement("li");
         li.textContent = member.name;
         li.classList.add("member-item");
 
-        if (activeChildren.length > 0) {
+        if (member.children && member.children.length > 0) {
             const details = document.createElement("details");
             details.classList.add("children-details");
 
             const summary = document.createElement("summary");
-
-            const nameSpan = document.createElement("span");
-            nameSpan.textContent = "子供"; // ここにアイコンや文字もOK
-            summary.appendChild(nameSpan);
-
+            summary.textContent = "子供";
             details.appendChild(summary);
 
             const childList = document.createElement("ul");
-            childList.classList.add("children-list");
 
-            activeChildren.forEach(child => {
+            member.children.forEach(child => {
                 const childLi = document.createElement("li");
                 childLi.textContent = child.childName;
                 childList.appendChild(childLi);
@@ -335,13 +355,257 @@ async function loadMembers() {
             li.appendChild(details);
         }
 
-
         list.appendChild(li);
     });
 
     if (overlay) overlay.style.display = "none";
 }
 
+async function loadMembersAdmin() {
+    const card = document.getElementById("membersCard");
+    const overlay = card.querySelector(".loading-overlay");
+    overlay.style.display = "flex";
+
+    const res = await callGasApi({ action: "getMembers", role: "admin" });
+    console.log(res);
+
+    const list = document.getElementById("memberList");
+    list.innerHTML = "";
+
+    // 承認待ち
+    const hold = res.members.filter(m => m.status === "hold");
+    const active = res.members.filter(m => m.status === "active");
+
+    // ====== 承認待ち ======
+    if (hold.length > 0) {
+        const title = document.createElement("p");
+        title.textContent = "承認待ちメンバー";
+        title.classList.add("list-title");
+        list.appendChild(title);
+    }
+
+    hold.forEach(member => {
+        const li = buildMemberItem(member, true); // ★ 処理を統一
+        list.appendChild(li);
+    });
+
+    // ====== アクティブ ======
+    if (active.length > 0) {
+        const title = document.createElement("p");
+        title.textContent = "アクティブメンバー";
+        title.classList.add("list-title");
+        list.appendChild(title);
+    }
+
+    active.forEach(member => {
+        const li = buildMemberItem(member, false); // ★ 処理を統一
+        list.appendChild(li);
+    });
+
+    overlay.style.display = "none";
+}
+
+function buildMemberItem(member, isHold) {
+    const li = document.createElement("li");
+    li.classList.add("member-item");
+    if (isHold) li.classList.add("is-hold");
+
+    // 承認待ちバッジ
+    if (isHold) {
+        const badge = document.createElement("span");
+        badge.classList.add("badge-hold");
+        badge.textContent = "承認待ち";
+        li.appendChild(badge);
+    }
+
+    // 名前
+    const nameSpan = document.createElement("span");
+    nameSpan.classList.add("member-name");
+    nameSpan.textContent = member.name;
+    li.appendChild(nameSpan);
+
+    // 子供
+    if (member.children?.length > 0) {
+        const details = document.createElement("details");
+        details.classList.add("children-details");
+
+        const summary = document.createElement("summary");
+        summary.textContent = `子供（${member.children.length}人）`;
+        details.appendChild(summary);
+
+        const ul = document.createElement("ul");
+        member.children.forEach(child => {
+            const c = document.createElement("li");
+            c.textContent = child.childName;
+            ul.appendChild(c);
+        });
+
+        details.appendChild(ul);
+        li.appendChild(details);
+    }
+
+    // ボタン
+    const btn = document.createElement("button");
+    btn.classList.add("member-action");
+
+    if (isHold) {
+        btn.textContent = "承認する";
+        btn.addEventListener("click", () => approveMember(member.userId));
+    } else {
+        btn.textContent = "削除";
+        btn.addEventListener("click", () => deleteMember(member.userId));
+    }
+
+    li.appendChild(btn);
+
+    return li;
+}
+
+// ============================
+// 承認処理
+// ============================
+async function approveMember(userId) {
+    if (!confirm("このユーザーを承認しますか？")) return;
+
+    const res = await callGasApi({
+        action: "approveMember",
+        userId
+    });
+
+    if (res.success) {
+        alert("承認しました！");
+        loadMembersAdmin();
+    } else {
+        alert("承認に失敗しました");
+    }
+}
+
+// ============================
+// 削除処理
+// ============================
+async function deleteMember(userId) {
+    if (!confirm("本当に削除しますか？")) return;
+
+    const res = await callGasApi({
+        action: "deleteMember",
+        userId
+    });
+
+    if (res.success) {
+        alert("削除しました！");
+        loadMembersAdmin();
+    } else {
+        alert("削除に失敗しました");
+    }
+}
+
+// ============================
+// 新規入力　初期化
+// ============================
+function initEventCreateCard() {
+    // タイトル・日付・時間を空に
+    document.getElementById("eventTitle").value = "";
+    document.getElementById("eventDate").value = "";
+    document.getElementById("eventTime").value = "";
+
+    // 演目リストを空に
+    const performanceList = document.querySelector(".performance-list");
+    performanceList.innerHTML = "";
+
+    // 折りたたみリストを空に
+    document.querySelectorAll(".response-list").forEach(ul => ul.innerHTML = "");
+
+    // loading-overlay を非表示
+    const overlay = document.querySelector(".event-create-card .loading-overlay");
+    if (overlay) overlay.style.display = "none";
+}
+
+/* =======================================================
+イベント新規作成
+======================================================= */
+document.addEventListener("DOMContentLoaded", () => {
+    const addBtn = document.getElementById("addPerformanceBtn");
+    const performanceList = document.getElementById("performanceList");
+    const saveBtn = document.querySelector(".save-event-btn");
+    const loadingOverlay = document.querySelector(".event-create-card .loading-overlay");
+
+    // 演目追加
+    addBtn.addEventListener("click", () => {
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("performance-item");
+
+        // 演目名
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.placeholder = "演目名";
+        nameInput.classList.add("performance-name");
+        wrapper.appendChild(nameInput);
+
+        // 固定担当欄
+        ["太鼓", "小太鼓", "獅子舞"].forEach(roleName => {
+            const roleInput = document.createElement("input");
+            roleInput.type = "text";
+            roleInput.placeholder = roleName;
+            roleInput.classList.add("performance-role");
+            roleInput.dataset.role = roleName;
+            wrapper.appendChild(roleInput);
+        });
+
+        performanceList.appendChild(wrapper);
+    });
+
+    // 保存ボタン
+    saveBtn.addEventListener("click", async () => {
+            if (!confirm("保存しますか？")) return;
+        const type = document.querySelector('input[name="eventType"]:checked').value;
+        const title = document.getElementById("eventTitle").value.trim();
+        const date = document.getElementById("eventDate").value;
+        const time = document.getElementById("eventTime").value;
+        const location = document.getElementById("eventLocation").value.trim();
+
+        if (!title) return alert("タイトルを入力してください");
+        if (!date) return alert("日付を選択してください");
+        if (!time) return alert("時間を選択してください");
+
+        const eventData = { type, title, date, time, location };
+
+        try {
+            loadingOverlay.style.display = "flex";
+
+            // イベント保存
+            const res = await callGasApi({ action: "saveEvent", event: eventData });
+            if (!res.success) throw new Error(res.message || "イベント保存失敗");
+            const eventId = res.eventId;
+
+            // 演目保存
+            const items = document.querySelectorAll(".performance-item");
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const name = item.querySelector(".performance-name").value.trim();
+                if (!name) continue;
+
+                const roles = {};
+                item.querySelectorAll(".performance-role").forEach(input => {
+                    roles[input.dataset.role] = input.value.trim();
+                });
+
+                await callGasApi({
+                    action: "addPerformance",
+                    performance: { eventId, name, order: i + 1, roles }
+                });
+            }
+
+            alert("イベントと演目を保存しました");
+            document.getElementById("eventCreateCard").style.display = "none";
+
+        } catch (err) {
+            console.error(err);
+            alert("保存中にエラーが発生しました");
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    });
+});
 
 
 
@@ -372,17 +636,26 @@ async function fillDetailCard(eventData, userId, card) {
     const overlay = card.querySelector(".loading-overlay");
     if (overlay) overlay.style.display = "flex";
 
-    card.querySelector(".event-detail-card-title").textContent = eventData.title || "";
-    card.querySelector(".event-detail-card-date").textContent = eventData.date || "";
-    card.querySelector(".event-detail-card-time-text").textContent = eventData.time || "";
-
     try {
-        const result = await callGasApi({ action: "getEventDetailWithUserData", eventId: Number(eventData.eventId), userId });
-        const myAnswer = result.personal[String(eventData.eventId)] || "";
+        // 基本情報
+        card.querySelector(".event-detail-card-title").textContent = eventData.title || "";
+        card.querySelector(".event-detail-card-date").textContent = eventData.date || "";
+        card.querySelector(".event-detail-card-time-text").textContent = eventData.time || "";
+        card.querySelector(".event-detail-card-location").textContent = eventData.location || "場所未設定";
 
+        // 詳細取得
+        const result = await callGasApi({
+            action: "getEventDetailWithUserData",
+            eventId: Number(eventData.eventId),
+            userId
+        });
+
+        // 自分の回答
+        const myAnswer = result.personal ? result.personal[String(eventData.eventId)] || "" : "";
         card.querySelector(".response-btn.yes").classList.toggle("selected", myAnswer === "参加");
         card.querySelector(".response-btn.no").classList.toggle("selected", myAnswer === "不参加");
 
+        // 参加者リスト
         fillResponseList(card.querySelector("ul.response-list.yes"), result.yes);
         fillResponseList(card.querySelector("ul.response-list.no"), result.no);
         fillResponseList(card.querySelector("ul.response-list.na"), result.na);
@@ -390,11 +663,45 @@ async function fillDetailCard(eventData, userId, card) {
         card.querySelector(".toggle-response-btn.yes").textContent = `参加者 ${result.yes.length}人`;
         card.querySelector(".toggle-response-btn.no").textContent  = `不参加者 ${result.no.length}人`;
         card.querySelector(".toggle-response-btn.na").textContent  = `未回答者 ${result.na.length}人`;
-        
-        // リストは初期状態で閉じる
+
+        // 演目リスト表示
+        const perfList = card.querySelector(".performance-list");
+        perfList.innerHTML = ""; // クリア
+
+        if (Array.isArray(result.performances)) {
+            result.performances.forEach(perf => {
+                const li = document.createElement("li");
+                li.classList.add("performance-item");
+
+                // 演目名
+                const nameSpan = document.createElement("span");
+                nameSpan.classList.add("performance-name");
+                nameSpan.textContent = perf.name || "未設定";
+                li.appendChild(nameSpan);
+
+                // 担当情報
+                if (perf.roles) {
+                    const rolesText = Object.entries(perf.roles)
+                        .map(([role, person]) => `${role}: ${person || "未設定"}`)
+                        .join(" / ");
+                    const rolesSpan = document.createElement("span");
+                    rolesSpan.classList.add("performance-roles");
+                    rolesSpan.textContent = " - " + rolesText;
+                    li.appendChild(rolesSpan);
+                }
+
+                perfList.appendChild(li);
+            });
+        }
+
+        // 初期状態でリストを閉じる
         card.querySelectorAll(".response-list").forEach(ul => ul.style.display = "none");
-    } catch(e) { console.error(e); }
-    if (overlay) overlay.style.display = "none";
+
+    } catch(e) {
+        console.error(e);
+    } finally {
+        if (overlay) overlay.style.display = "none";
+    }
 }
 
 function fillResponseList(ulElement, names) {

@@ -15,7 +15,7 @@ body {
     font-size: 12px;
     padding: 4px 8px;
     border-radius: 6px;
-    z-index: 999;        
+    z-index: 20;        
     font-family: sans-serif;
 }
 
@@ -80,10 +80,18 @@ body {
 
 .tab-content {
     display: none;
-    position: relative;
+    position: absolute;
+    top: 10%; /* nav-title の高さ分 */
+    bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ボトムナビの高さ + safe-area */
+    left: 0;
+    right: 0;
+    
+    overflow: auto;  /* はみ出したらスクロール */
+    box-sizing: border-box;
     z-index: auto;
-    top: 5px;
 }
+
+
 
 .tab-content.active {
     display: block;
@@ -93,11 +101,10 @@ body {
 /* --- ボトムナビ --- */
 .bottom-nav {
     position: fixed;
-    bottom: 0; /* ここを 0 にすることが重要 */
+    bottom: 0;
     left: 0;
     width: 100%;
-    height: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ホームバー分を確保 */
-    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ナビ本体 + padding分 */
     display: flex;
     justify-content: space-around;
     background-color: #ffffff;
@@ -111,13 +118,15 @@ body {
     background-color: #3a3a3a;
     color: #FFFFFF;
     text-align: center;
-    padding: 8px 0;
-    font-size: 1rem;
+    font-size: 0.8rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    /* padding-bottom は子内の余白として残す場合 */
+    padding-bottom: 1rem;
 }
+
 
 .bottom-nav-btn.active i {
     background-color: #6e6e6e;
@@ -193,7 +202,7 @@ border-radius: 20px;
 /* 入力欄をボトムナビの上に固定 */
 .chat-input-area {
 position: fixed;
-bottom: 5rem; /* ボトムナビの高さ分上に */
+bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ボトムナビの高さ分上に */
 left: 0;
 width: 100%;
 display: flex;
@@ -207,15 +216,15 @@ box-sizing: border-box; /* パディング込みで幅100% */
 
 /* 入力欄内 */
 #chat-input {
-flex: 1 1 auto;   /* 残り幅を自動調整 */
-min-width: 0;     /* overflow防止 */
-padding: 10px 16px;
-font-size: 16px;
-border-radius: 20px;
-border: none;
-background-color: #222;
-color: #fff;
-box-sizing: border-box; /* パディング込みで幅計算 */
+    flex: 1 1 auto;   /* 残り幅を自動調整 */
+    min-width: 0;     /* overflow防止 */
+    padding: 10px 16px;
+    font-size: 16px;
+    border-radius: 20px;
+    border: none;
+    background-color: #222;
+    color: #fff;
+    box-sizing: border-box; /* パディング込みで幅計算 */
 }
 
 /* 送信ボタン */
@@ -467,6 +476,7 @@ height: 120px;
     transition: transform 0.45s ease-out;
     overflow-y: auto;
 }
+
 .event-detail-card.active { transform: translateY(0); }
 
 /* タイトル */
@@ -490,6 +500,30 @@ height: 120px;
 }
 .event-detail-card-date { color: #bbbbbb; font-size: 1.2rem; }
 .event-detail-card-time-text { font-size: 1.2rem; color: #fff; }
+
+/* ===========================
+    イベント作成カード全体
+=========================== */
+.event-create-card {
+    position: fixed;
+    inset: 0;
+    background: #1e1e1e;
+    z-index: 99;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 70px 24px 24px;
+    gap: 16px;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    transform: translateY(100%);
+    transition: transform 0.45s ease-out;
+    overflow-y: auto;
+}
+
+.event-create-card.active { transform: translateY(0); }
+
+
 
 /* =======================================================
 参加・不参加・未回答ボタン
@@ -681,7 +715,7 @@ height: 120px;
 }
 
 .top-instagram {
-    width: 100%;
+    width: 10%;
     padding: 12px 16px;
     background: #222;
     border-radius: 12px;
@@ -720,6 +754,11 @@ height: 120px;
     z-index: 99;
 }
 
+li {
+  list-style: none; /* マーカーを消す */
+  padding-left: 0;  /* インデントを消す場合 */
+}
+
 .member-card.active {
     transform: translateY(0);
 }
@@ -728,33 +767,33 @@ height: 120px;
 .member-item {
     background: #333;
     padding: 10px 16px;
+    padding-right: 90px;    /* ボタンのスペース */
     border-radius: 8px;
     margin-bottom: 8px;
     list-style: none;
     display: flex;           /* 横並び */
     align-items: center;     /* 縦位置中央揃え */
-    justify-content: flex-start; /* 左寄せにして間に隙間を作る場合 */
-    gap: 8px; /* 親名と折りたたみの間隔 */
+    justify-content: flex-start;
+    gap: 8px;
+    position: relative;      /* ボタン配置用 */
 }
 
 /* 子供折りたたみを小さく横に */
 .children-details {
-    display: inline-block;   /* 親の横に並べる */
-    margin-left: 8px;        /* 親名との間隔 */
+    display: inline-block;
+    margin-left: 8px;
     background: #222;
     border-radius: 6px;
     padding: 2px 6px;
 }
 
-/* summary は横並び用に調整 */
 .children-details summary {
     cursor: pointer;
     font-weight: bold;
-    padding: 0; 
-    list-style: none; /* summary のデフォルトマーカーを消す */
+    padding: 0;
+    list-style: none;
 }
 
-/* 子リストは折りたたまれたときに下に出る */
 .children-list {
     list-style: none;
     padding-left: 12px;
@@ -771,21 +810,53 @@ height: 120px;
 }
 
 .children-details summary::-webkit-details-marker {
-    display: none; /* デフォルトの三角を消す */
+    display: none;
 }
 
 .children-details summary::before {
-    content: "▶"; /* 三角アイコン */
+    content: "▶";
     display: inline-block;
     margin-right: 4px;
     transition: transform 0.3s;
 }
 
 .children-details[open] summary::before {
-    transform: rotate(90deg); /* 開いたら右向き */
+    transform: rotate(90deg);
 }
 
+/* 承認 or 削除ボタン */
+.member-item .member-action {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+}
 
+/* アクティブ（赤） */
+.member-item:not(.is-hold) .member-action {
+    background: #d9534f;
+}
+
+/* 承認待ち（青） ※下に書くことで勝つ */
+.member-item.is-hold .member-action {
+    background: #0275d8;
+}
+
+.badge-hold {
+    display: inline-block;
+    background: #d9534f;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 8px;
+}
 
 
 
