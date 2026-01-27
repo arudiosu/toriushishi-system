@@ -89,8 +89,6 @@ function showSkeleton(containers) {
 イベント取得・描画
 ======================================================= */
 async function loadHomeEvents() {
-    const res = await callGasApi({ action: "getEventsWithStats", userId });
-
     try {
         const res = await callGasApi({ action: "getEventsWithStats", userId });
         
