@@ -363,7 +363,6 @@ async function loadMembersAdmin() {
     overlay.style.display = "flex";
 
     const res = await callGasApi({ action: "getMembers", role: "admin" });
-    console.log(res);
 
     const list = document.getElementById("memberList");
     list.innerHTML = "";
