@@ -15,7 +15,7 @@ body {
     font-size: 12px;
     padding: 4px 8px;
     border-radius: 6px;
-    z-index: 21;
+    z-index: auto;
     font-family: sans-serif;
 }
 
@@ -88,7 +88,7 @@ body {
     
     overflow: auto;  /* はみ出したらスクロール */
     box-sizing: border-box;
-    z-index: 20;
+    z-index: auto;
 }
 
 
