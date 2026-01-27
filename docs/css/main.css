@@ -501,9 +501,9 @@ height: 120px;
 .event-detail-card-date { color: #bbbbbb; font-size: 1.2rem; }
 .event-detail-card-time-text { font-size: 1.2rem; color: #fff; }
 
-/* ===========================
-    イベント作成カード全体
-=========================== */
+/* ====================================
+    イベント作成カード 共通デザイン調整
+==================================== */
 .event-create-card {
     position: fixed;
     inset: 0;
@@ -512,8 +512,8 @@ height: 120px;
     color: #fff;
     display: flex;
     flex-direction: column;
-    padding: 70px 24px 24px;
-    gap: 16px;
+    padding: 70px 20px 40px;
+    gap: 20px;
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
     transform: translateY(100%);
@@ -521,9 +521,123 @@ height: 120px;
     overflow-y: auto;
 }
 
-.event-create-card.active { transform: translateY(0); }
+.event-create-card.active {
+    transform: translateY(0);
+}
+
+/* セクション全体のカード風 */
+.event-create-card > div {
+    background: #2c2c2c;
+    padding: 16px 18px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* ラベル共通 */
+.event-create-card label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #e6e6e6;
+}
+
+/* 入力欄共通 */
+.event-create-card input[type="text"],
+.event-create-card input[type="date"],
+.event-create-card input[type="time"] {
+    width: 100%;
+    box-sizing: border-box;   /* ←これが必須 */
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: #1f1f1f;
+    color: #fff;
+    font-size: 1.05rem;
+}
+
+/* iPhone Safari で date/time アイコンを表示させる対策 */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);       /* 白く反転させて黒背景でも見えるように */
+    opacity: 1;
+}
 
 
+
+/* 入力ブロック（event-create-card > div）の横幅調整 */
+.event-create-card > div {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+
+/* ラジオボタン行を整える */
+.event-type-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 6px;
+}
+
+.event-type-options label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+}
+
+/* 演目リストを見やすく */
+#performanceList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#performanceList input[type="text"] {
+    padding: 10px 12px;
+    background: #1f1f1f;
+    border: 1px solid #555;
+    border-radius: 8px;
+    color: #fff;
+}
+
+/* 演目追加ボタン */
+#addPerformanceBtn {
+    padding: 10px;
+    width: 100%;
+    background: #3a6cff;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    margin-top: 6px;
+    cursor: pointer;
+}
+
+#addPerformanceBtn:hover {
+    opacity: 0.8;
+}
+
+/* 保存ボタンを固定＋強調 */
+.save-event-btn {
+    margin-top: 10px;
+    padding: 14px;
+    width: 100%;
+    background: #ff4f4f;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+}
+
+.save-event-btn:hover {
+    background: #ff6f6f;
+}
 
 /* =======================================================
 参加・不参加・未回答ボタン

@@ -711,7 +711,7 @@ function initChatBot() {
     const input = document.getElementById("chat-input");
     const sendBtn = document.getElementById("chat-send-btn");
     const area = document.getElementById("ai-chat-area");
-    if(!input || !sendBtn) return;
+    if(!input || !sendBtn || !area) return;
 
     sendBtn.addEventListener("click", sendChat);
     input.addEventListener("keypress", (e) => { if(e.key === "Enter") sendChat(); });
@@ -726,47 +726,56 @@ function initChatBot() {
         area.appendChild(typingWrapper);
         area.scrollTop = area.scrollHeight;
 
-        try {
-            const data = await callGasApi({ action: "chatAI", text: text });
-            typingWrapper.remove();
-            appendChatMessage(data.reply || data, "ai");
-        } catch(e) {
-            typingWrapper.remove();
-            appendChatMessage("エラーが発生しました。", "ai");
+    try {
+        const data = await callGasApi({ action: "chatAI", text: text });
+        typingWrapper.remove();
+
+        // エラー（success:false）
+        if (!data.success) {
+            appendChatMessage(
+                data.message || "AIサービスでエラーが発生しました。",
+                "ai"
+            );
+            return;
         }
+
+        // 成功
+        appendChatMessage(data.reply, "ai");
+
+    } catch (e) {
+        typingWrapper.remove();
+        appendChatMessage("通信エラーが発生しました。", "ai");
     }
 
-function createTypingIndicator() {
-    const wrapper = document.createElement("div");
-    wrapper.className = "chat-ai-wrapper";
+    }
 
-    const icon = `<img class="icon-img" src="images/鳥生獅子連_ししまる.PNG">`;
+    function createTypingIndicator() {
+        const wrapper = document.createElement("div");
+        wrapper.className = "chat-ai-wrapper";
 
-    const msg = document.createElement("div");
-    msg.className = "chat-msg chat-ai";
+        const icon = `<img class="icon-img" src="images/鳥生獅子連_ししまる.PNG">`;
 
-    // 初期状態
-    msg.textContent = "入力中";
+        const msg = document.createElement("div");
+        msg.className = "chat-msg chat-ai";
+        msg.textContent = "入力中";
 
-    wrapper.innerHTML = icon;
-    wrapper.appendChild(msg);
+        wrapper.innerHTML = icon;
+        wrapper.appendChild(msg);
 
-    // ドットアニメーション
-    let dotCount = 0;
-    const intervalId = setInterval(() => {
-        dotCount = (dotCount + 1) % 4; // 0→1→2→3→0
-        msg.textContent = "入力中" + ".".repeat(dotCount);
-    }, 400);
+        let dotCount = 0;
+        const intervalId = setInterval(() => {
+            dotCount = (dotCount + 1) % 4;
+            msg.textContent = "入力中" + ".".repeat(dotCount);
+        }, 400);
 
-    // remove() されたときアニメ停止
-    const originalRemove = wrapper.remove;
-    wrapper.remove = function () {
-        clearInterval(intervalId);
-        originalRemove.call(this);
-    };
+        const originalRemove = wrapper.remove;
+        wrapper.remove = function () {
+            clearInterval(intervalId);
+            originalRemove.call(this);
+        };
 
-    return wrapper;
-}
+        return wrapper;
+    }
 
     function appendChatMessage(text, sender) {
         const msgDiv = document.createElement("div");
