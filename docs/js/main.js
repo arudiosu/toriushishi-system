@@ -148,7 +148,6 @@ function renderScheduleHome(events) {
 
 function renderScheduleEvent(events) {
     if (!events || !Array.isArray(events)) return;
-    eventMap = {};
     const activeFragment = document.createDocumentFragment();
     const pastFragment = document.createDocumentFragment();
     const today = new Date(); today.setHours(0,0,0,0);
@@ -228,7 +227,6 @@ function initEventDelegation() {
             ul.style.display = isOpen ? "none" : "block";
             toggleChildrenBtn.classList.toggle('open', !isOpen);
         }
-
 
 
         // 回答
@@ -640,7 +638,6 @@ async function fillDetailCard(eventData, userId, card) {
         card.querySelector(".event-detail-card-date").textContent = eventData.date || "";
         card.querySelector(".event-detail-card-time-text").textContent = eventData.time || "";
         card.querySelector(".event-detail-card-location").textContent = eventData.location || "場所未設定";
-
         // 詳細取得
         const result = await callGasApi({
             action: "getEventDetailWithUserData",
