@@ -8,7 +8,7 @@ body {
 
 #version {
     position: fixed;
-    top: 60px;               /* ナビの下あたりにずらす */
+    top: 90px;               /* ナビの下あたりにずらす */
     right: 10px;
     background-color: rgba(0,0,0,0.6);
     color: #fff;
