@@ -88,7 +88,7 @@ body {
     
     overflow: auto;  /* はみ出したらスクロール */
     box-sizing: border-box;
-    z-index: auto;
+    z-index: 20;
 }
 
 
