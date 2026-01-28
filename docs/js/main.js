@@ -1,35 +1,5 @@
-/* =======================================================
-ログインチェック
-======================================================= */
-async function checkLogin() {
-    const sessionId = localStorage.getItem("sessionId");
 
-    if (!sessionId) {
-        alert("ログインしてください");
-        location.href = "index.html";
-        return false;
-    }
-
-    try {
-        const res = await callGasApi({ action: "validateSession", sessionId })
-
-        if (!data.valid) {
-            alert("ログイン期限切れです");
-            localStorage.removeItem("sessionId");
-            location.href = "index.html";
-            return false;
-        }
-
-        // ログイン有効
-        return true;
-
-    } catch (err) {
-        console.error(err);
-        alert("通信エラー");
-        return false;
-    }
-}
-
+checkAdminAccess();
 
 /* =======================================================
 共通変数・DOM取得
@@ -307,7 +277,7 @@ document.querySelectorAll(".tab-item").forEach(tab => {
 
         // 管理者メンバー管理
         if (targetTab === "member-management") {
-            if (!(await checkAdminAccess())) {
+            if (userRole === "user") {
                 alert("管理者のみアクセスできます。");
                 return;
             }
@@ -318,7 +288,7 @@ document.querySelectorAll(".tab-item").forEach(tab => {
 
         // 新規作成カード
         if (targetTab === "event-management") {
-            if (!(await checkAdminAccess())) {
+            if (userRole === "user") {
                 alert("管理者のみアクセスできます。");
                 return;
             }

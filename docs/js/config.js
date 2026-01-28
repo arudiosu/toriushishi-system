@@ -20,7 +20,8 @@ async function callGasApi(payload) {
 /* =======================================================
 権限チェック
 ======================================================= */
-let userId; // ページ内で一時的に保持
+let userId;   // ページ内で一時的に保持
+let userRole; // ページ内で一時的に保持
 
 async function checkAdminAccess() {
     try {
@@ -42,8 +43,9 @@ async function checkAdminAccess() {
             return false;
         }
 
-        // 管理者 OK の場合、userId も取得
+        // 管理者 OK の場合、userId と role を取得
         userId = res.userId;
+        userRole = res.role; // ← 正しいプロパティ名
         return true;
 
     } catch (err) {
@@ -52,3 +54,4 @@ async function checkAdminAccess() {
         return false;
     }
 }
+
