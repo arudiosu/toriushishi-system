@@ -16,3 +16,39 @@ async function callGasApi(payload) {
     // 一旦以下の構成で試してください
     return await response.json(); 
 }
+
+/* =======================================================
+権限チェック
+======================================================= */
+let userId; // ページ内で一時的に保持
+
+async function checkAdminAccess() {
+    try {
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+            alert("ログインしてください");
+            location.href = "index.html";
+            return false;
+        }
+
+        const res = await callGasApi({
+            action: "validateSession",
+            sessionId,
+            requiredRole: "admin"
+        });
+
+        if (!res.valid) {
+            alert(res.msg || "権限がありません");
+            return false;
+        }
+
+        // 管理者 OK の場合、userId も取得
+        userId = res.userId;
+        return true;
+
+    } catch (err) {
+        console.error("Admin check error:", err);
+        alert("通信エラー");
+        return false;
+    }
+}

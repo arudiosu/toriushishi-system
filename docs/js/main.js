@@ -40,9 +40,6 @@ const eventPastScheduleContainer = document.getElementById("event-past-schedule"
 let scheduleContainer = [];
 let eventMap = {}; 
 
-const userId = localStorage.getItem("userId");
-const role = localStorage.getItem("role");
-
 
 /* =======================================================
 初期処理
@@ -95,15 +92,6 @@ function initBottomNav() {
             document.getElementById(target).classList.add("active");
         });
     });
-}
-
-function roleCheck() {
-    if(!role) return;
-    const cleanRole = String(role).replace(/['"]/g, "");
-    if (cleanRole === "user") {
-        const addBtn = document.querySelector('button[data-tab="addEvent"]');
-        if (addBtn) addBtn.style.display = "none";
-    }
 }
 
 function showSkeleton(containers) {
@@ -320,7 +308,7 @@ document.querySelectorAll(".tab-item").forEach(tab => {
 
         // 管理者メンバー管理
         if (targetTab === "member-management") {
-            if (role !== "admin") {
+            if (!(await checkAdminAccess())) {
                 alert("管理者のみアクセスできます。");
                 return;
             }
@@ -331,6 +319,10 @@ document.querySelectorAll(".tab-item").forEach(tab => {
 
         // 新規作成カード
         if (targetTab === "event-management") {
+            if (!(await checkAdminAccess())) {
+                alert("管理者のみアクセスできます。");
+                return;
+            }
             const card = document.getElementById("eventCreateCard");
             card.classList.add("active");
             // 必要なら初期化関数を呼ぶ
@@ -531,7 +523,6 @@ async function deleteMember(userId) {
 // 新規入力　初期化
 // ============================
 function initEventCreateCard() {
-    if (!confirm("本当に削除しますか？")) return;
     // タイトル・日付・時間を空に
     document.getElementById("eventTitle").value = "";
     document.getElementById("eventDate").value = "";
