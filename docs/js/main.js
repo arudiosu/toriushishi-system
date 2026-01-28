@@ -46,7 +46,6 @@ let eventMap = {};
 ======================================================= */
 document.addEventListener("DOMContentLoaded", () => {
     initLoadingScreen();
-    roleCheck();
     scheduleContainer = [homeScheduleContainer, eventActiveScheduleContainer, eventPastScheduleContainer];
     showSkeleton(scheduleContainer);
     loadHomeEvents();
