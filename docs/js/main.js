@@ -498,6 +498,7 @@ async function deleteMember(userId) {
 // 新規入力　初期化
 // ============================
 function initEventCreateCard() {
+    if (!confirm("本当に削除しますか？")) return;
     // タイトル・日付・時間を空に
     document.getElementById("eventTitle").value = "";
     document.getElementById("eventDate").value = "";
