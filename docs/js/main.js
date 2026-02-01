@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initBottomNav();
     initEventDelegation();
     initChatBot();
+    loadMembersUser();
 });
 
 /* =======================================================
@@ -165,21 +166,36 @@ function renderScheduleEvent(events) {
 ======================================================= */
 function initEventDelegation() {
     document.body.addEventListener("click", async (event) => {
+        const target = event.target;
         // リロード
-        if (event.target.closest(".reload-btn")) {
-            const tabId = event.target.closest(".tab-content")?.id;
-            if (tabId === "home") {
-                showSkeleton([homeScheduleContainer]);
-                await loadHomeEvents();
-            } else if (tabId === "event") {
-                showSkeleton([eventActiveScheduleContainer, eventPastScheduleContainer]);
-                await loadEventEvents();
+        if (target.closest(".reload-btn")) {
+            const tabId = target.closest(".tab-content")?.id;
+
+            switch (tabId) {
+                case "home":
+                    showSkeleton([homeScheduleContainer]);
+                    await loadHomeEvents();
+                    break;
+
+                case "event":
+                    showSkeleton([
+                        eventActiveScheduleContainer,
+                        eventPastScheduleContainer
+                    ]);
+                    await loadEventEvents();
+                    break;
+
+                // case "user":
+                //     // await loadMembersUser();
+                //     // console.log("on");
+                //     break;
             }
             return;
         }
 
+
         // イベントカード全体タップ
-        const eventCard = event.target.closest("[data-event-id]");
+        const eventCard = target.closest("[data-event-id]");
         if (eventCard && eventCard.closest("#home-schedule, #event-active-schedule, #event-past-schedule")) {
             const eventId = Number(eventCard.dataset.eventId);
             const eventData = eventMap[eventId];
@@ -194,28 +210,23 @@ function initEventDelegation() {
         }
 
         // 折りたたみ
-        const toggleResponseBtn = event.target.closest(".toggle-response-btn, .toggle-performances-btn");
-        if (toggleResponseBtn) {
-            const ul = toggleResponseBtn.nextElementSibling;
+        function toggleNextList(btn) {
+            const ul = btn.nextElementSibling;
             if (!ul) return;
             const isOpen = ul.style.display === "block";
             ul.style.display = isOpen ? "none" : "block";
-            toggleResponseBtn.classList.toggle('open', !isOpen);
+            btn.classList.toggle("open", !isOpen);
         }
-
-        // 子供用折りたたみ
-        const toggleChildrenBtn = event.target.closest(".toggle-children-btn");
-        if (toggleChildrenBtn) {
-            const ul = toggleChildrenBtn.nextElementSibling;
-            if (!ul) return;
-            const isOpen = ul.style.display === "block";
-            ul.style.display = isOpen ? "none" : "block";
-            toggleChildrenBtn.classList.toggle('open', !isOpen);
+        const toggleBtn = target.closest(
+        ".toggle-response-btn, .toggle-performances-btn, .toggle-children-btn"
+        );
+        if (toggleBtn) {
+            toggleNextList(toggleBtn);
+            return;
         }
-
 
         // 回答
-        const responseBtn = event.target.closest(".response-btn");
+        const responseBtn = target.closest(".response-btn");
         if (responseBtn) {
             const card = responseBtn.closest(".event-detail-card");
             const dateText = card.querySelector(".event-detail-card-date")?.textContent || "";
@@ -230,7 +241,7 @@ function initEventDelegation() {
         }
 
         // 詳細閉じる（data-targetを利用したケース形式）
-        const closeTarget = event.target.closest(".close-card-btn");
+        const closeTarget = target.closest(".close-card-btn");
         if (closeTarget) {
             // data-targetで閉じる対象を取得
             const targetType = closeTarget.dataset.target; // "event", "member" など
@@ -249,6 +260,7 @@ function initEventDelegation() {
                     // data-target が無い場合や想定外
                     break;
             }
+            return;
         }
     });
 }
@@ -266,7 +278,6 @@ document.querySelectorAll(".tab-item").forEach(tab => {
         // 一般メンバー
         if (targetTab === "member") {
             card.classList.add("active");
-            await loadMembersUser();
             return;
         }
 
@@ -277,7 +288,6 @@ document.querySelectorAll(".tab-item").forEach(tab => {
                 return;
             }
             card.classList.add("active");
-            await loadMembersAdmin();
             return;
         }
 
@@ -300,7 +310,7 @@ document.querySelectorAll(".tab-item").forEach(tab => {
 async function loadMembersUser() {
     const card = document.getElementById("membersCard");
     const overlay = card.querySelector(".loading-overlay");
-    if (overlay) overlay.style.display = "flex";
+    overlay.style.display = "flex";
 
     const res = await callGasApi({ action: "getMembers", role: "user" });
 
@@ -342,8 +352,8 @@ async function loadMembersUser() {
 
         list.appendChild(li);
     });
-
-    if (overlay) overlay.style.display = "none";
+        
+    overlay.style.display = "none";
 }
 
 async function loadMembersAdmin() {

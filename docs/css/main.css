@@ -346,6 +346,7 @@ scroll-behavior: smooth;
     /* テキストを見やすく */
     font-size: 1rem;
     line-height: 1.35;
+    cursor: pointer;
 }
 
 /* 左のカラーアクセントライン */
@@ -405,7 +406,6 @@ scroll-behavior: smooth;
     opacity: 0.85;
     margin-top: 4px;
     left: 0; bottom: 0;
-    cursor: pointer;
 }
 
 /* 自分の回答（右上にバッジみたいに配置） */
