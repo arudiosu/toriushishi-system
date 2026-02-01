@@ -127,9 +127,6 @@ function renderScheduleHome(events) {
                 <div class="answer">${ev.myStatus}</div>
                 <div class="responses-list">参加:${ev.yes} 不参加:${ev.no}</div>
             `;
-            const btn = document.createElement("button");
-            btn.className = "detail"; btn.textContent = "詳細"; btn.dataset.eventId = ev.eventId;
-            card.appendChild(btn);
             fragment.appendChild(card);
         }
     });
@@ -154,9 +151,6 @@ function renderScheduleEvent(events) {
             <div class="answer">${ev.myStatus}</div>
             <div class="responses-list">参加:${ev.yes} 不参加:${ev.no}</div>
         `;
-        const btn = document.createElement("button");
-        btn.className = "detail"; btn.textContent = "詳細"; btn.dataset.eventId = ev.eventId;
-        card.appendChild(btn);
 
         const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
         if (eventDate >= today) activeFragment.appendChild(card);
@@ -184,13 +178,14 @@ function initEventDelegation() {
             return;
         }
 
-        // 詳細ボタン
-        const detailBtn = event.target.closest(".detail");
-        if (detailBtn) {
-            const eventId = Number(detailBtn.dataset.eventId);
+        // イベントカード全体タップ
+        const eventCard = event.target.closest("[data-event-id]");
+        if (eventCard && eventCard.closest("#home-schedule, #event-active-schedule, #event-past-schedule")) {
+            const eventId = Number(eventCard.dataset.eventId);
             const eventData = eventMap[eventId];
-            const card = document.getElementById("eventDetailCard"); // IDで指定
-            if(card) {
+            const card = document.getElementById("eventDetailCard");
+
+            if (card) {
                 card.classList.add("active");
                 card.dataset.eventId = eventId;
                 await fillDetailCard(eventData, userId, card);
