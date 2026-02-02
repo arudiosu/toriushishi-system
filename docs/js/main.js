@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initEventDelegation();
     initChatBot();
     loadMembersUser();
+    loadMembersAdmin();
 });
 
 /* =======================================================
@@ -251,7 +252,10 @@ function initEventDelegation() {
                     document.getElementById("eventDetailCard")?.classList.remove("active");
                     break;
                 case "member":
-                    document.getElementById("membersCard")?.classList.remove("active");
+                    document.getElementById("membersCardUser")?.classList.remove("active");
+                    break;
+                case "member-management":
+                    document.getElementById("membersCardAdmin")?.classList.remove("active");
                     break;
                 case "create":
                     document.getElementById("eventCreateCard")?.classList.remove("active");
@@ -273,11 +277,12 @@ document.querySelectorAll(".tab-item").forEach(tab => {
     tab.addEventListener("click", async () => {
 
         const targetTab = tab.dataset.target;
-        const card = document.getElementById("membersCard");
+        const userCard = document.getElementById("membersCardUser");
+        const adminCard = document.getElementById("membersCardAdmin");
 
         // 一般メンバー
         if (targetTab === "member") {
-            card.classList.add("active");
+            userCard.classList.add("active");
             return;
         }
 
@@ -287,7 +292,7 @@ document.querySelectorAll(".tab-item").forEach(tab => {
                 alert("管理者のみアクセスできます。");
                 return;
             }
-            card.classList.add("active");
+            adminCard.classList.add("active");
             return;
         }
 
@@ -307,99 +312,70 @@ document.querySelectorAll(".tab-item").forEach(tab => {
 });
 
 // メンバー取得関数
-async function loadMembersUser() {
-    const card = document.getElementById("membersCard");
+async function loadMembersUser(force = false) {
+    const card = document.getElementById("membersCardUser");
+    const list = document.getElementById("memberListUser");
     const overlay = card.querySelector(".loading-overlay");
+
     overlay.style.display = "flex";
 
     const res = await callGasApi({ action: "getMembers", role: "user" });
 
-    if (!res.success) {
-        if (overlay) overlay.style.display = "none";
-        return;
-    }
-
-    const list = document.getElementById("memberList");
     list.innerHTML = "";
+    res.members
+        .filter(m => m.status === "active")
+        .forEach(m => list.appendChild(buildMemberItemUser(m)));
 
-    // ★★ ここでフィルタリング（承認待ちは表示しない）
-    const activeMembers = res.members.filter(m => m.status === "active");
-
-    activeMembers.forEach(member => {
-        const li = document.createElement("li");
-        li.textContent = member.name;
-        li.classList.add("member-item");
-
-        if (member.children && member.children.length > 0) {
-            const details = document.createElement("details");
-            details.classList.add("children-details");
-
-            const summary = document.createElement("summary");
-            summary.textContent = "子供";
-            details.appendChild(summary);
-
-            const childList = document.createElement("ul");
-
-            member.children.forEach(child => {
-                const childLi = document.createElement("li");
-                childLi.textContent = child.childName;
-                childList.appendChild(childLi);
-            });
-
-            details.appendChild(childList);
-            li.appendChild(details);
-        }
-
-        list.appendChild(li);
-    });
-        
     overlay.style.display = "none";
 }
 
-async function loadMembersAdmin() {
-    const card = document.getElementById("membersCard");
+async function loadMembersAdmin(force = false) {
+    const card = document.getElementById("membersCardAdmin");
+    const list = document.getElementById("memberListAdmin");
     const overlay = card.querySelector(".loading-overlay");
+
     overlay.style.display = "flex";
 
-    const res = await callGasApi({ action: "getMembers", role: "admin" });
+    try {
+        const res = await callGasApi({ action: "getMembers", role: "admin" });
 
-    const list = document.getElementById("memberList");
-    list.innerHTML = "";
+        list.innerHTML = "";
 
-    // 承認待ち
-    const hold = res.members.filter(m => m.status === "hold");
-    const active = res.members.filter(m => m.status === "active");
+        const hold = res.members.filter(m => m.status === "hold");
+        const active = res.members.filter(m => m.status === "active");
 
-    // ====== 承認待ち ======
-    if (hold.length > 0) {
-        const title = document.createElement("p");
-        title.textContent = "承認待ちメンバー";
-        title.classList.add("list-title");
-        list.appendChild(title);
+        if (hold.length) {
+            list.appendChild(makeTitle("承認待ちメンバー"));
+            hold.forEach(m =>
+                list.appendChild(buildMemberItemAdmin(m, true))
+            );
+        }
+        if (active.length) {
+            list.appendChild(makeTitle("アクティブメンバー"));
+            active.forEach(m =>
+                list.appendChild(buildMemberItemAdmin(m, false))
+            );
+        }
+    } finally {
+        overlay.style.display = "none";
     }
-
-    hold.forEach(member => {
-        const li = buildMemberItem(member, true); // ★ 処理を統一
-        list.appendChild(li);
-    });
-
-    // ====== アクティブ ======
-    if (active.length > 0) {
-        const title = document.createElement("p");
-        title.textContent = "アクティブメンバー";
-        title.classList.add("list-title");
-        list.appendChild(title);
-    }
-
-    active.forEach(member => {
-        const li = buildMemberItem(member, false); // ★ 処理を統一
-        list.appendChild(li);
-    });
-
-    overlay.style.display = "none";
 }
 
-function buildMemberItem(member, isHold) {
+function buildMemberItemUser(member) {
+    const li = document.createElement("li");
+    li.classList.add("member-item");
+
+    const nameSpan = document.createElement("span");
+    nameSpan.classList.add("member-name");
+    nameSpan.textContent = member.name;
+    li.appendChild(nameSpan);
+
+    appendChildren(li, member);
+
+    return li;
+}
+
+function buildMemberItemAdmin(member, isHold) {
     const li = document.createElement("li");
     li.classList.add("member-item");
     if (isHold) li.classList.add("is-hold");
@@ -419,26 +395,9 @@ function buildMemberItem(member, isHold) {
     li.appendChild(nameSpan);
 
     // 子供
-    if (member.children?.length > 0) {
-        const details = document.createElement("details");
-        details.classList.add("children-details");
+    appendChildren(li, member);
 
-        const summary = document.createElement("summary");
-        summary.textContent = `子供（${member.children.length}人）`;
-        details.appendChild(summary);
-
-        const ul = document.createElement("ul");
-        member.children.forEach(child => {
-            const c = document.createElement("li");
-            c.textContent = child.childName;
-            ul.appendChild(c);
-        });
-
-        details.appendChild(ul);
-        li.appendChild(details);
-    }
-
-    // ボタン
+    // ボタン（管理者のみ）
     const btn = document.createElement("button");
     btn.classList.add("member-action");
 
@@ -451,8 +410,35 @@ function buildMemberItem(member, isHold) {
     }
 
     li.appendChild(btn);
-
     return li;
+}
+
+function appendChildren(li, member) {
+    if (!member.children?.length) return;
+
+    const details = document.createElement("details");
+    details.classList.add("children-details");
+
+    const summary = document.createElement("summary");
+    summary.textContent = `子供（${member.children.length}人）`;
+    details.appendChild(summary);
+
+    const ul = document.createElement("ul");
+    member.children.forEach(child => {
+        const c = document.createElement("li");
+        c.textContent = child.childName;
+        ul.appendChild(c);
+    });
+
+    details.appendChild(ul);
+    li.appendChild(details);
+}
+
+function makeTitle(text) {
+    const p = document.createElement("p");
+    p.textContent = text;
+    p.classList.add("list-title");
+    return p;
 }
 
 // ============================
