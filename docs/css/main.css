@@ -81,6 +81,7 @@ body {
 .tab-content {
     display: none;
     position: absolute;
+    height: 100vh;
     top: 10%; /* nav-title の高さ分 */
     bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); /* ボトムナビの高さ + safe-area */
     left: 0;
@@ -160,7 +161,9 @@ body {
     margin: 0;
 }
 
-
+.contents {
+    height: calc(90% - (5rem + env(safe-area-inset-bottom) + 1rem));
+}
 
 
 /* スケルトン共通 */
@@ -420,6 +423,11 @@ scroll-behavior: smooth;
     font-size: 0.85rem;
 }
 
+.event-detail-card-comment {
+    border: 2px solid #ffffff;
+}
+
+
 /* =======================================================
 イベント詳細カード
 ======================================================= */
@@ -535,7 +543,7 @@ height: 120px;
     border: 1px solid #555;
     background: #1f1f1f;
     color: #fff;
-    font-size: 1.05rem;
+    font-size: 16px;
 }
 
 /* iPhone Safari で date/time アイコンを表示させる対策 */
@@ -617,6 +625,14 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 .save-event-btn:hover {
     background: #ff6f6f;
+}
+
+#eventComment {
+    white-space: pre-wrap;
+    font-size: 16px;
+    height: 120px;
+    color: white;
+    background-color: #1e1e1e;
 }
 
 /* =======================================================
@@ -729,10 +745,9 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .performance-list li .assigned { font-size: 0.95rem; opacity: 0.85; }
 
 /* 戻るボタン */
-.close-card-btn {
+.close-card-btn,
+.edit-event-btn {
     position: absolute;
-    top: 12px;
-    left: 12px;
     padding: 6px 16px;
     font-size: 1rem;
     border-radius: 8px;
@@ -745,7 +760,16 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     max-width: 150px;
     z-index: 101;
 }
-.close-card-btn:hover { background: #444; }
+.close-card-btn,.edit-event-btn:hover { background: #444; }
+
+.close-card-btn {
+    top: 12px;
+    left: 12px;
+}
+.edit-event-btn {
+    top: 12px;
+    right: 12px;
+}
 
 /* =======================================================
 レスポンシブ
@@ -952,6 +976,27 @@ li {
     margin-right: 8px;
 }
 
+/* ---------------------------------------- */
+    /* カレンダー */
+/* ---------------------------------------- */
+
+.calendar-form {
+    height: 100%;
+    display: flex;
+    flex-direction: column; /* ← これが超重要 */
+}
+
+#calendarArea {
+    flex: 2; /* 上が 3分の2 */
+}
+
+#eventArea {
+    flex: 1; /* 下が 3分の1 */
+    overflow-y: auto;
+}
 
 
 
+
+
+/* bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); ボトムナビの高さ分上に */

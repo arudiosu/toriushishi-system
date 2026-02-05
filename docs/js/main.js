@@ -1,6 +1,3 @@
-
-checkAdminAccess();
-
 /* =======================================================
 共通変数・DOM取得
 ======================================================= */
@@ -14,18 +11,30 @@ let eventMap = {};
 /* =======================================================
 初期処理
 ======================================================= */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     initLoadingScreen();
-    scheduleContainer = [homeScheduleContainer, eventActiveScheduleContainer, eventPastScheduleContainer];
-    showSkeleton(scheduleContainer);
-    loadHomeEvents();
-    loadEventEvents();
+
+    // UI は先に使えるようにする
     initBottomNav();
     initEventDelegation();
     initChatBot();
-    loadMembersUser();
-    loadMembersAdmin();
+
+    // スケルトン表示（ユーザーID不要）
+    scheduleContainer = [
+        homeScheduleContainer,
+        eventActiveScheduleContainer,
+        eventPastScheduleContainer
+    ];
+    showSkeleton(scheduleContainer);
+
+    const ok = await checkSessionAndGetUserId();
+    if (!ok) return;
+    loadHomeEvents();   
+    loadEventEvents();    
+    loadMembersUser();   
+    if (userRole === "admin") loadMembersAdmin();
 });
+
 
 /* =======================================================
 ローディング画面
@@ -201,7 +210,6 @@ function initEventDelegation() {
             const eventId = Number(eventCard.dataset.eventId);
             const eventData = eventMap[eventId];
             const card = document.getElementById("eventDetailCard");
-
             if (card) {
                 card.classList.add("active");
                 card.dataset.eventId = eventId;
@@ -542,12 +550,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const date = document.getElementById("eventDate").value;
         const time = document.getElementById("eventTime").value;
         const location = document.getElementById("eventLocation").value.trim();
+        const comment = document.getElementById("eventComment").value;
 
         if (!title) return alert("タイトルを入力してください");
         if (!date) return alert("日付を選択してください");
         if (!time) return alert("時間を選択してください");
 
-        const eventData = { type, title, date, time, location };
+        const eventData = { type, title, date, time, location, comment };
 
         try {
             loadingOverlay.style.display = "flex";
@@ -622,6 +631,7 @@ async function fillDetailCard(eventData, userId, card) {
         card.querySelector(".event-detail-card-date").textContent = eventData.date || "";
         card.querySelector(".event-detail-card-time-text").textContent = eventData.time || "";
         card.querySelector(".event-detail-card-location").textContent = eventData.location || "場所未設定";
+        card.querySelector(".event-detail-card-comment").textContent = eventData.comment || "";
         // 詳細取得
         const result = await callGasApi({
             action: "getEventDetailWithUserData",

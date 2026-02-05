@@ -9,7 +9,7 @@
 </head>
 
 <body>
-<p id="version">demo v0.2.5</p>
+<p id="version">demo v0.2.6</p>
 
 <div id="loading">
     <img src="images/鳥生獅子連中＿loading.png" alt="ローディング" class="loading-img rotating">
@@ -66,10 +66,10 @@
         </button>
     </div>
     <div class="contents">
-    <div class="event-status">進行中のイベント</div>
-    <div id="event-active-schedule"></div>
-    <div class="event-status">過去のイベント</div>
-    <div id="event-past-schedule"></div> 
+        <div class="event-status">進行中のイベント</div>
+        <div id="event-active-schedule"></div>
+        <div class="event-status">過去のイベント</div>
+        <div id="event-past-schedule"></div> 
     </div>
 </div>
 
@@ -103,6 +103,12 @@
         <button class="reload-btn" title="更新">
         <i class="fas fa-sync-alt"></i>
         </button>
+    </div>
+    <div class="contents">
+        <div class="calendar-form">
+            <div id="calendarArea"></div>
+            <div id="eventArea"></div>
+        </div>
     </div>
 </div>
 
@@ -153,6 +159,7 @@
         </div>
 
         <button class="close-card-btn" data-target="event">戻る</button>
+        <button class="edit-event-btn" data-target="event-edit">編集</button>
 
         <!-- タイトル -->
         <div class="event-detail-card-title"></div>
@@ -171,6 +178,8 @@
             <button class="response-btn yes">参加</button>
             <button class="response-btn no">不参加</button>
         </div>
+
+        <div class="event-detail-card-comment"></div>
 
         <!-- 折りたたみリスト -->
         <div class="response-section yes">
@@ -231,6 +240,12 @@
         <div class="event-create-card-location">
             <label for="eventLocation">場所</label>
             <input type="text" id="eventLocation" placeholder="場所を入力" />
+        </div>
+
+        <!-- コメント入力 -->
+        <div class="event-create-card-comment">
+            <label for="eventComment">連絡事項</label>
+            <textarea id="eventComment" placeholder="連絡事項を入力"></textarea>
         </div>
 
         <!-- 演目入力 -->
