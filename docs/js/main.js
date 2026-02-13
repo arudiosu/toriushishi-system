@@ -129,6 +129,7 @@ function renderScheduleHome(events) {
     events.forEach(ev => {
         const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
         if (eventDate >= today) {
+            eventMap[ev.eventId] = ev;
             const className = ev.type === "festival" ? "event-festival" : "event-regular";
             const card = document.createElement("div");
             card.className = className; card.dataset.eventId = ev.eventId;
@@ -274,6 +275,14 @@ function initEventDelegation() {
             }
             return;
         }
+
+        if(target.closest(".edit-event-btn")) {
+            const detailCard = document.getElementById("eventDetailCard");
+            const eventId = Number(detailCard.dataset.eventId);
+            const eventData = eventMap[eventId];
+
+            openEditForm(eventData);
+        }
     });
 }
 
@@ -310,10 +319,7 @@ document.querySelectorAll(".tab-item").forEach(tab => {
                 alert("管理者のみアクセスできます。");
                 return;
             }
-            const card = document.getElementById("eventCreateCard");
-            card.classList.add("active");
-            // 必要なら初期化関数を呼ぶ
-            initEventCreateCard();
+            openCreateForm();
             return;
         }
     });
@@ -488,13 +494,15 @@ async function deleteMember(userId) {
 }
 
 // ============================
-// 新規入力　初期化
+// 新規入力　初期化  編集
 // ============================
 function initEventCreateCard() {
     // タイトル・日付・時間を空に
     document.getElementById("eventTitle").value = "";
     document.getElementById("eventDate").value = "";
     document.getElementById("eventTime").value = "";
+    document.getElementById("eventLocation").value = "";
+    document.getElementById("eventComment").value = "";
 
     // 演目リストを空に
     const performanceList = document.querySelector(".performance-list");
@@ -507,6 +515,40 @@ function initEventCreateCard() {
     const overlay = document.querySelector(".event-create-card .loading-overlay");
     if (overlay) overlay.style.display = "none";
 }
+
+function openCreateForm() {
+    initEventCreateCard();  // ← 全て空にする
+
+    const createCard = document.querySelector(".event-create-card");
+    createCard.classList.add("active");
+}
+
+
+function openEditForm(eventData) {
+    // 初期化
+    initEventCreateCard();
+
+    // 編集IDをセット（←追加）
+    const editCard = document.querySelector(".event-create-card");
+    editCard.dataset.eventId = eventData.eventId;
+
+    // ラジオ
+    document.querySelectorAll('input[name="eventType"]').forEach(radio => {
+        radio.checked = (radio.value === eventData.type);
+    });
+
+    // テキスト
+    document.getElementById("eventTitle").value = eventData.title || "";
+    document.getElementById("eventDate").value = (eventData.date || "").replace(/\//g, "-");
+    document.getElementById("eventTime").value = eventData.time || "";
+    document.getElementById("eventLocation").value = eventData.location || "";
+    document.getElementById("eventComment").value = eventData.comment || "";
+
+    // 編集カードを表示
+    editCard.classList.add("active");
+}
+
+
 
 /* =======================================================
 イベント新規作成
@@ -543,8 +585,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // 保存ボタン
+
     saveBtn.addEventListener("click", async () => {
-            if (!confirm("保存しますか？")) return;
+        if (!confirm("保存しますか？")) return;
+
         const type = document.querySelector('input[name="eventType"]:checked').value;
         const title = document.getElementById("eventTitle").value.trim();
         const date = document.getElementById("eventDate").value;
@@ -556,36 +600,34 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!date) return alert("日付を選択してください");
         if (!time) return alert("時間を選択してください");
 
-        const eventData = { type, title, date, time, location, comment };
+        // ★ 編集 or 新規判定
+        const createCard = document.querySelector(".event-create-card");
+        const eventId = createCard.dataset.eventId ? Number(createCard.dataset.eventId) : null;
+
+        // ★ eventId を含めて GAS に送る
+        const eventData = {
+            eventId,   // ← 編集ならIDあり / 新規なら null
+            type,
+            title,
+            date,
+            time,
+            location,
+            comment
+        };
 
         try {
             loadingOverlay.style.display = "flex";
 
-            // イベント保存
-            const res = await callGasApi({ action: "saveEvent", event: eventData });
+            // GAS 側で new / update を切り替えられる
+            const res = await callGasApi({
+                action: "saveEvent",
+                event: eventData
+            });
+
             if (!res.success) throw new Error(res.message || "イベント保存失敗");
-            const eventId = res.eventId;
 
-            // 演目保存
-            const items = document.querySelectorAll(".performance-item");
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                const name = item.querySelector(".performance-name").value.trim();
-                if (!name) continue;
-
-                const roles = {};
-                item.querySelectorAll(".performance-role").forEach(input => {
-                    roles[input.dataset.role] = input.value.trim();
-                });
-
-                await callGasApi({
-                    action: "addPerformance",
-                    performance: { eventId, name, order: i + 1, roles }
-                });
-            }
-
-            alert("イベントと演目を保存しました");
-            document.getElementById("eventCreateCard").style.display = "none";
+            alert("保存しました");
+            document.getElementById("eventCreateCard").classList.remove("active");
 
         } catch (err) {
             console.error(err);
