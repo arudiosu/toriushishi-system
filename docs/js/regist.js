@@ -2,7 +2,6 @@
 // 戻るボタン（ログイン画面に戻す）
 // =============================
 document.getElementById("backLogin").addEventListener("click", () => {
-    // 通常の画面遷移（フロント用）
     window.location.href = "index.html"; 
 });
 
@@ -10,13 +9,36 @@ document.getElementById("backLogin").addEventListener("click", () => {
 // =============================
 // 子供追加
 // =============================
-document.getElementById("addChildBtn").addEventListener("click", () => {
-    const list = document.getElementById("childList");
-    const input = document.createElement("input");
-    input.type = "text";
-    input.classList.add("child-name");
-    input.placeholder = "子供の名前";
-    list.appendChild(input);
+const lastNameInput = document.getElementById("lastName");
+const childList = document.getElementById("childList");
+const addChildBtn = document.getElementById("addChildBtn");
+
+// 親の氏が変わったら全ての子ども欄の氏を更新
+lastNameInput.addEventListener("input", () => {
+    updateAllChildLastNames();
+});
+
+function updateAllChildLastNames() {
+    const lastname = lastNameInput.value.trim();
+    document.querySelectorAll(".child-lastname").forEach(input => {
+        input.value = lastname;
+    });
+}
+
+// 子どもを追加
+addChildBtn.addEventListener("click", () => {
+    const lastname = lastNameInput.value.trim();
+
+    const div = document.createElement("div");
+    div.classList.add("child-row");
+
+    div.innerHTML = `
+        <input type="text" class="child-lastname" readonly placeholder="性" value="${lastname}">
+        <input type="text" class="child-firstname" placeholder="名">
+        <input type="date" class="child-birth">
+    `;
+
+    childList.appendChild(div);
 });
 
 
@@ -25,8 +47,14 @@ document.getElementById("addChildBtn").addEventListener("click", () => {
 // =============================
 document.getElementById("registBtn").addEventListener("click", async () => {
 
+    const ok = confirm("この内容で登録申請しますか？\n後から変更する場合は管理者が必要です。");
+    if (!ok) return;
+
+    // ===== 氏名 =====
     const lastName  = document.getElementById("lastName").value.trim();
     const firstName = document.getElementById("firstName").value.trim();
+
+    // ===== パスワード =====
     const password  = document.getElementById("password").value.trim();
 
     if (!lastName || !firstName || !password) {
@@ -34,18 +62,50 @@ document.getElementById("registBtn").addEventListener("click", async () => {
         return;
     }
 
-    const childInputs = document.querySelectorAll(".child-name");
-    const children = Array.from(childInputs).map(i => i.value.trim());
+    if (password.length < 4) {
+        alert("パスワードは4文字以上で入力してください。");
+        return;
+    }
 
+    // ===== 電話番号 =====
+    const phone1 = document.getElementById("phone1").value.trim();
+    const phone2 = document.getElementById("phone2").value.trim();
+    const phone3 = document.getElementById("phone3").value.trim();
+    const phone = `${phone1}-${phone2}-${phone3}`;
+
+    // ===== 住所 =====
+    const prefecture = document.getElementById("prefecture").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const addressDetail = document.getElementById("addressDetail").value.trim();
+
+    // ===== 生年月日（親） =====
+    const birthDate = document.getElementById("birthDate").value.trim();
+
+    // ===== 子供一覧 =====
+    const childRows = document.querySelectorAll(".child-row");
+    const children = Array.from(childRows).map(row => {
+        return {
+            lastName:  row.querySelector(".child-lastname").value.trim(),
+            firstName: row.querySelector(".child-firstname").value.trim(),
+            birthday:  row.querySelector(".child-birth").value.trim()
+        };
+    });
+
+    // ===== 送信データ =====
     const form = {
         action: "regist",
         lastName,
         firstName,
         password,
+        phone,
+        prefecture,
+        city,
+        addressDetail,
+        birthDate,
         children
     };
 
-    // 連打防止
+    // ===== 連打防止 =====
     const btn = document.getElementById("registBtn");
     btn.disabled = true;
     btn.textContent = "申請中...";
@@ -64,4 +124,50 @@ document.getElementById("registBtn").addEventListener("click", async () => {
         btn.disabled = false;
         btn.textContent = "申請";
     }
+});
+
+
+// =============================
+// 電話番号自動移動
+// =============================
+const phone1 = document.getElementById("phone1");
+const phone2 = document.getElementById("phone2");
+const phone3 = document.getElementById("phone3");
+
+function onlyNumber(el) {
+    el.value = el.value.replace(/\D/g, "");
+}
+
+phone1.addEventListener("input", () => {
+    onlyNumber(phone1);
+    if (phone1.value.length === phone1.maxLength) phone2.focus();
+});
+
+phone2.addEventListener("input", () => {
+    onlyNumber(phone2);
+    if (phone2.value.length === phone2.maxLength) phone3.focus();
+});
+
+phone3.addEventListener("input", () => {
+    onlyNumber(phone3);
+});
+
+
+// =============================
+// 愛媛県の市区町村一覧
+// =============================
+const ehimeCities = [
+    "松山市", "今治市", "宇和島市", "八幡浜市", "新居浜市",
+    "西条市", "大洲市", "伊予市", "四国中央市", "西予市", "東温市"
+];
+
+const citySelect = document.getElementById("city");
+
+window.addEventListener("DOMContentLoaded", () => {
+    ehimeCities.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        citySelect.appendChild(opt);
+    });
 });

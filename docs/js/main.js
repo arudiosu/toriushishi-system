@@ -4,6 +4,7 @@
 const homeScheduleContainer = document.getElementById("home-schedule");
 const eventActiveScheduleContainer = document.getElementById("event-active-schedule");
 const eventPastScheduleContainer = document.getElementById("event-past-schedule");
+const loadingOverlay = document.getElementById("globalLoading");
 let scheduleContainer = [];
 let eventMap = {}; 
 
@@ -379,6 +380,15 @@ function buildMemberItemUser(member) {
     const li = document.createElement("li");
     li.classList.add("member-item");
 
+    // --- ここから追加（役職） ---
+    if (member.position) {
+        const posSpan = document.createElement("span");
+        posSpan.classList.add("member-position");
+        posSpan.textContent = member.position;
+        li.appendChild(posSpan);
+    }
+    // --- ここまで追加 ---
+
     const nameSpan = document.createElement("span");
     nameSpan.classList.add("member-name");
     nameSpan.textContent = member.name;
@@ -394,13 +404,14 @@ function buildMemberItemAdmin(member, isHold) {
     li.classList.add("member-item");
     if (isHold) li.classList.add("is-hold");
 
-    // 承認待ちバッジ
-    if (isHold) {
-        const badge = document.createElement("span");
-        badge.classList.add("badge-hold");
-        badge.textContent = "承認待ち";
-        li.appendChild(badge);
+    // --- ここから追加（役職） ---
+    if (member.position) {
+        const posSpan = document.createElement("span");
+        posSpan.classList.add("member-position");
+        posSpan.textContent = member.position;
+        li.appendChild(posSpan);
     }
+    // --- ここまで追加 ---
 
     // 名前
     const nameSpan = document.createElement("span");
@@ -408,10 +419,9 @@ function buildMemberItemAdmin(member, isHold) {
     nameSpan.textContent = member.name;
     li.appendChild(nameSpan);
 
-    // 子供
     appendChildren(li, member);
 
-    // ボタン（管理者のみ）
+    // 管理ボタン
     const btn = document.createElement("button");
     btn.classList.add("member-action");
 
@@ -434,7 +444,7 @@ function appendChildren(li, member) {
     details.classList.add("children-details");
 
     const summary = document.createElement("summary");
-    summary.textContent = `子供（${member.children.length}人）`;
+    summary.textContent = `子供`;
     details.appendChild(summary);
 
     const ul = document.createElement("ul");
@@ -557,7 +567,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const addBtn = document.getElementById("addPerformanceBtn");
     const performanceList = document.getElementById("performanceList");
     const saveBtn = document.querySelector(".save-event-btn");
-    const loadingOverlay = document.querySelector(".event-create-card .loading-overlay");
 
     // 演目追加
     addBtn.addEventListener("click", () => {
@@ -664,8 +673,16 @@ async function updateResponse(eventId, answer, card, userId) {
 }
 
 async function fillDetailCard(eventData, userId, card) {
-    const overlay = card.querySelector(".loading-overlay");
-    if (overlay) overlay.style.display = "flex";
+    if (loadingOverlay) loadingOverlay.style.display = "flex";
+
+    const editBtn = card.querySelector(".edit-event-btn");
+
+    // 管理者のみ編集ボタンを表示
+    if (userRole === "admin") {
+        editBtn.style.display = "block";
+    } else {
+        editBtn.style.display = "none";
+    }
 
     try {
         // 基本情報
@@ -674,19 +691,18 @@ async function fillDetailCard(eventData, userId, card) {
         card.querySelector(".event-detail-card-time-text").textContent = eventData.time || "";
         card.querySelector(".event-detail-card-location").textContent = eventData.location || "場所未設定";
         card.querySelector(".event-detail-card-comment").textContent = eventData.comment || "";
-        // 詳細取得
+
+        // --- ここからは既存処理そのまま ---
         const result = await callGasApi({
             action: "getEventDetailWithUserData",
             eventId: Number(eventData.eventId),
             userId
         });
 
-        // 自分の回答
         const myAnswer = result.personal ? result.personal[String(eventData.eventId)] || "" : "";
         card.querySelector(".response-btn.yes").classList.toggle("selected", myAnswer === "参加");
         card.querySelector(".response-btn.no").classList.toggle("selected", myAnswer === "不参加");
 
-        // 参加者リスト
         fillResponseList(card.querySelector("ul.response-list.yes"), result.yes);
         fillResponseList(card.querySelector("ul.response-list.no"), result.no);
         fillResponseList(card.querySelector("ul.response-list.na"), result.na);
@@ -695,22 +711,19 @@ async function fillDetailCard(eventData, userId, card) {
         card.querySelector(".toggle-response-btn.no").textContent  = `不参加者 ${result.no.length}人`;
         card.querySelector(".toggle-response-btn.na").textContent  = `未回答者 ${result.na.length}人`;
 
-        // 演目リスト表示
         const perfList = card.querySelector(".performance-list");
-        perfList.innerHTML = ""; // クリア
+        perfList.innerHTML = "";
 
         if (Array.isArray(result.performances)) {
             result.performances.forEach(perf => {
                 const li = document.createElement("li");
                 li.classList.add("performance-item");
 
-                // 演目名
                 const nameSpan = document.createElement("span");
                 nameSpan.classList.add("performance-name");
                 nameSpan.textContent = perf.name || "未設定";
                 li.appendChild(nameSpan);
 
-                // 担当情報
                 if (perf.roles) {
                     const rolesText = Object.entries(perf.roles)
                         .map(([role, person]) => `${role}: ${person || "未設定"}`)
@@ -725,13 +738,12 @@ async function fillDetailCard(eventData, userId, card) {
             });
         }
 
-        // 初期状態でリストを閉じる
         card.querySelectorAll(".response-list").forEach(ul => ul.style.display = "none");
 
     } catch(e) {
         console.error(e);
     } finally {
-        if (overlay) overlay.style.display = "none";
+        if (loadingOverlay) loadingOverlay.style.display = "none";
     }
 }
 

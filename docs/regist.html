@@ -33,9 +33,63 @@
             </div>
         </div>
 
-        <div class="child-title">中学生以下の子供の名前</div>
+        <!-- ★ 住所（都道府県は愛媛県のみ、市区町村を選択） -->
+        <div class="row">
+            <div class="input-block">
+                <label>都道府県</label>
+                <select id="prefecture">
+                    <option value="愛媛県">愛媛県</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="input-block">
+                <label>市区町村</label>
+                <select id="city">
+                    <option value="">市区町村を選択</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 詳細住所 -->
+        <div class="row">
+            <div class="input-block">
+                <label>住所（番地・建物名）</label>
+                <input type="text" id="addressDetail" placeholder="例：〇〇町 1-2-3 ○○マンション 101号">
+            </div>
+        </div>
+
+        <!-- ★ 電話番号（3分割） -->
+        <div class="row phone-row">
+            <div class="input-block">
+                <label>電話番号</label>
+                <div class="phone-split">
+                    <input type="tel" id="phone1" maxlength="3">
+                    <span class="separator">-</span>
+                    <input type="tel" id="phone2" maxlength="4">
+                    <span class="separator">-</span>
+                    <input type="tel" id="phone3" maxlength="4">
+                </div>
+            </div>
+        </div>
+
+        <!-- ★ 生年月日 -->
+        <div class="row">
+            <div class="input-block">
+                <label>生年月日</label>
+                <input type="date" id="birthDate" name="birthDate">
+            </div>
+        </div>
+
+        <div class="child-title">中学生以下の子役の名前</div>
+
         <div id="childList" class="child-list">
-            <input type="text" class="child-name" placeholder="子供の名前">
+            <div class="child-row">
+                <input type="text" class="child-lastname" placeholder="姓">
+                <input type="text" class="child-firstname" placeholder="名">
+                <input type="date" class="child-birth">
+            </div>
         </div>
 
         <button type="button" class="add-btn" id="addChildBtn">＋ 子どもを追加</button>

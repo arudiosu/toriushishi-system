@@ -11,16 +11,17 @@ font-family: sans-serif;
 
 /* 登録カード（中央配置） */
 .regist {
-width: 90%;
-max-width: 28rem;
-padding: 1.8rem;
-position: fixed;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-background: #fff;
-border-radius: 15px;
-box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    width: 90%;
+    max-width: 28rem;
+    padding: 1.8rem;
+
+    /* 固定位置を解除 */
+    position: static;
+    margin: 2rem auto;  
+
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 
 /* タイトル */
@@ -75,10 +76,26 @@ color: #333;
 margin-bottom: 0.3rem;
 }
 
-/* 子供リスト */
-.child-list input {
-width: 100%;
-margin-top: 8px;
+.child-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.child-lastname {
+    width: 80px;
+    background: #eee;
+}
+
+.child-firstname {
+    flex: 1;
+}
+
+.child-birth {
+    width: 8.5rem; /* → 日付入力は固定幅にすると綺麗 */
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
 }
 
 /* ボタン */
@@ -115,4 +132,19 @@ background: #777;
 .back-btn:hover {
 opacity: 0.9;
 cursor: pointer;
+}
+
+.phone-split {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.phone-split input {
+    width: 4.5rem;
+    text-align: center;
+}
+
+.separator {
+    font-size: 1.2rem;
 }
