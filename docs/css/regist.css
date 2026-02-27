@@ -134,6 +134,12 @@ opacity: 0.9;
 cursor: pointer;
 }
 
+#prefecture,
+#city {
+    font-size: 0.9rem;  
+    padding: 6px;    
+}
+
 .phone-split {
     display: flex;
     align-items: center;
@@ -147,4 +153,15 @@ cursor: pointer;
 
 .separator {
     font-size: 1.2rem;
+}
+
+.sns-consent-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: auto;        /* ← 幅を取らない */
+    margin-top: 10px;
+}
+.sns-consent-wrap input[type="checkbox"] {
+    width: auto;        /* ← デフォルトサイズで表示 */
 }
