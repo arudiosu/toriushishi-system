@@ -81,6 +81,25 @@ document.getElementById("registBtn").addEventListener("click", async () => {
     // ===== 生年月日（親） =====
     const birthDate = document.getElementById("birthDate").value.trim();
 
+    // ==== 親の誕生日チェック ====
+    if (!birthDate) {
+        alert("親の生年月日を入力してください。");
+        return;
+    }
+
+    const parentBirth = new Date(birthDate);
+    const today = new Date();
+
+    if (isNaN(parentBirth.getTime())) {
+        alert("親の生年月日の形式が正しくありません。");
+        return;
+    }
+
+    if (parentBirth > today) {
+        alert("親の生年月日は未来日を指定できません。");
+        return;
+    }
+
     // ===== 子供一覧 =====
     const childRows = document.querySelectorAll(".child-row");
     const children = Array.from(childRows).map(row => {
@@ -90,6 +109,44 @@ document.getElementById("registBtn").addEventListener("click", async () => {
             birthday:  row.querySelector(".child-birth").value.trim()
         };
     });
+
+    // ==== 子供の誕生日チェック ====
+    for (const child of children) {
+
+        // 子供行が完全に空ならスキップ
+        if (!child.firstName && !child.birthday) {
+            continue;
+        }
+
+        // どれか一つでも欠けている場合
+        if (!child.lastName || !child.firstName || !child.birthday) {
+            alert("子供の氏名と生年月日はすべて入力してください。");
+            return;
+        }
+
+        const childBirth = new Date(child.birthday);
+
+        if (isNaN(childBirth.getTime())) {
+            alert(`子供「${child.lastName} ${child.firstName}」の生年月日の形式が正しくありません。`);
+            return;
+        }
+
+        if (childBirth > today) {
+            alert(`子供「${child.lastName} ${child.firstName}」の生年月日は未来日を指定できません。`);
+            return;
+        }
+    }
+
+    // ===== SNS 掲載同意 =====
+    const snsConsent = document.getElementById("snsConsent").checked;
+
+    if (!snsConsent) {
+        const noOk = confirm("SNS掲載に同意しない場合、顔にモザイク処理を行います。\n本当に同意しませんか？");
+        if (!noOk) {
+            // 同意しない → 取り消し → 処理中断
+            return;
+        }
+    }
 
     // ===== 送信データ =====
     const form = {
@@ -102,7 +159,8 @@ document.getElementById("registBtn").addEventListener("click", async () => {
         city,
         addressDetail,
         birthDate,
-        children
+        children,
+        snsConsent
     };
 
     // ===== 連打防止 =====
@@ -125,7 +183,6 @@ document.getElementById("registBtn").addEventListener("click", async () => {
         btn.textContent = "申請";
     }
 });
-
 
 // =============================
 // 電話番号自動移動

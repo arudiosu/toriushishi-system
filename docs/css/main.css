@@ -994,24 +994,93 @@ li {
 /* ---------------------------------------- */
     /* カレンダー */
 /* ---------------------------------------- */
-
+/* 全体のレイアウト（現状維持） */
 .calendar-form {
     height: 100%;
     display: flex;
-    flex-direction: column; /* ← これが超重要 */
+    flex-direction: column;
+    overflow: hidden;
 }
 
 #calendarArea {
-    flex: 2; /* 上が 3分の2 */
+    flex: 6;
+    min-height: 0;
+    overflow-y: auto; /* ← 中に収めてスクロール */
 }
 
 #eventArea {
-    flex: 1; /* 下が 3分の1 */
-    overflow-y: auto;
+    flex: 4;
+    min-height: 0;
+    overflow-y: auto; /* ← 中に収めてスクロール */
 }
 
+/* カレンダーヘッダー（月切り替え） */
+.cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem 0.4rem; /* ← 少し縮める */
+    background: #111;
+    border-radius: 6px;
+    margin-bottom: 0.4rem;
+    color: #fff;
+}
 
+/* 曜日 */
+.cal-weekday {
+    padding: 4px; /* ← 縦幅を縮める */
+    color: #ccc;
+    font-weight: bold;
+    font-size: 0.85rem; /* ← 少し小さく */
+}
 
+/* カレンダー網目 */
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px; /* ← 余白縮める */
+}
 
+/* 日付セル */
+.day {
+    text-align: right;
+    padding: 5px; /* ← パディング縮める */
+    height: 50px; /* ← 70px → 55px に縮める */
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(255,255,255,0.1);
+    cursor: pointer;
+    position: relative;
+}
+
+.day:hover {
+    background: #2d3e55;
+}
+
+.day.today {
+    background: #245a9f;
+    border: 2px solid #4a90e2;
+    font-weight: bold;
+}
+
+/* イベントありドット */
+.day .event-dot {
+    width: 6px;
+    height: 6px;
+    bottom: 4px;
+    left: 4px;
+}
+
+/* イベントカード */
+.event-card {
+    background: #111;
+    margin: 4px 0; /* ← 余白縮める */
+    padding: 8px; /* ← パディング縮める */
+    border-radius: 6px;
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(255,255,255,0.15);
+    font-size: 0.8rem; /* ← テキスト少し圧縮 */
+}
 
 /* bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); ボトムナビの高さ分上に */

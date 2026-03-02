@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initBottomNav();
     initEventDelegation();
     initChatBot();
+    initCalendar();
 
     // スケルトン表示（ユーザーID不要）
     scheduleContainer = [
@@ -837,4 +838,71 @@ function initChatBot() {
         area.appendChild(msgDiv);
         area.scrollTop = area.scrollHeight;
     }
+}
+
+function initCalendar() {
+    const today = new Date();
+    generateCalendar(today.getFullYear(), today.getMonth());
+}
+
+function generateCalendar(year, month) {
+
+    const cal = document.getElementById("calendarArea");
+    cal.innerHTML = "";
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay  = new Date(year, month + 1, 0);
+    const startWeekday = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+
+    // 曜日リスト（表記は好きに変更可）
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+    let html = `
+        <div class="cal-header">
+            <button class="prev">＜</button>
+            <span>${year}年${month+1}月</span>
+            <button class="next">＞</button>
+        </div>
+
+        <div class="cal-grid">
+    `;
+
+    // ① 曜日ヘッダー -----------------------------------------------------
+    for (let w of weekdays) {
+        html += `<div class="cal-weekday">${w}</div>`;
+    }
+
+    // ② 前の月の空白 -----------------------------------------------------
+    for (let i = 0; i < startWeekday; i++) {
+        html += `<div class="empty"></div>`;
+    }
+
+    // ③ 日付を並べる -----------------------------------------------------
+    for (let d = 1; d <= totalDays; d++) {
+        const fullDate = `${year}/${month+1}/${d}`;
+        html += `<div class="day" data-date="${fullDate}">${d}</div>`;
+    }
+
+    html += `</div>`;
+    cal.innerHTML = html;
+
+    // ④ 月移動 -----------------------------------------------------------
+    cal.querySelector(".prev").addEventListener("click", () => {
+        const prev = new Date(year, month - 1);
+        generateCalendar(prev.getFullYear(), prev.getMonth());
+    });
+
+    cal.querySelector(".next").addEventListener("click", () => {
+        const next = new Date(year, month + 1);
+        generateCalendar(next.getFullYear(), next.getMonth());
+    });
+
+    // ⑤ 日付クリック ------------------------------------------------------
+    cal.querySelectorAll(".day").forEach(day => {
+        day.addEventListener("click", () => {
+            const date = day.dataset.date;
+            loadEventByDate(date);
+        });
+    });
 }
