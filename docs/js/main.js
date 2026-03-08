@@ -140,6 +140,7 @@ function renderScheduleHome(events) {
                 <div class="event-title">${ev.title}</div>
                 <div class="answer">${ev.myStatus}</div>
                 <div class="responses-list">参加:${ev.yes} 不参加:${ev.no}</div>
+                <div class="deadline">期限:${ev.deadline}</div>
             `;
             fragment.appendChild(card);
         }
