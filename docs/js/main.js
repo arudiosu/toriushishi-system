@@ -117,6 +117,22 @@ async function getEvents() {
     }
 }
 
+async function getPractice() {
+    try {
+        const res = await callGasApi({ action: "getPractice", userId });
+
+        if (res && res.success && Array.isArray(res.practices)) {
+            practices = res.practices;
+        } else {
+            console.error("データ取得失敗:", res?.msg);
+            practices = [];
+        }
+    } catch (e) {
+        console.error("practice取得エラー:", e);
+        practices = [];
+    }
+}
+
 function loadHomeEvents() {
     homeScheduleContainer.innerHTML = "";
     renderScheduleHome(events);
