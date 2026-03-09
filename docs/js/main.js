@@ -106,18 +106,30 @@ function showSkeleton(containers) {
 ======================================================= */
 async function getEvents() {
     try {
-        const res = await callGasApi({ action: "getEventsWithStats", userId });
+        const res = await callGasApi({
+            action: "getEventsWithStats",
+            userId
+        });
 
         if (res && res.success && Array.isArray(res.events)) {
             events = res.events;
+
+            // ここで eventMap を更新
+            eventMap = {};
+            events.forEach(ev => {
+                eventMap[ev.eventId] = ev;
+            });
+
         } else {
             console.error("データ取得失敗:", res?.msg);
             events = [];
+            eventMap = {};
         }
 
     } catch (e) {
         console.error("イベント取得エラー:", e);
         events = [];
+        eventMap = {};
     }
 }
 
@@ -689,49 +701,47 @@ async function updateResponse(eventId, answer, card, userId) {
 }
 
 async function fillDetailCard(eventData, userId, card) {
+
     if (loadingOverlay) loadingOverlay.style.display = "flex";
 
     const editBtn = card.querySelector(".edit-event-btn");
-
-    // 管理者のみ編集ボタンを表示
-    if (userRole === "admin") {
-        editBtn.style.display = "block";
-    } else {
-        editBtn.style.display = "none";
-    }
+    editBtn.style.display = (userRole === "admin") ? "block" : "none";
 
     try {
+        // ==========
         // 基本情報
+        // ==========
         card.querySelector(".event-detail-card-title").textContent = eventData.title || "";
         card.querySelector(".event-detail-card-date").textContent = eventData.date || "";
         card.querySelector(".event-detail-card-time-text").textContent = eventData.time || "";
         card.querySelector(".event-detail-card-location").textContent = eventData.location || "場所未設定";
         card.querySelector(".event-detail-card-comment").textContent = eventData.comment || "";
 
-        // --- ここからは既存処理そのまま ---
-        const result = await callGasApi({
-            action: "getEventDetailWithUserData",
-            eventId: Number(eventData.eventId),
-            userId
-        });
+        // ==========
+        // 回答状況（GAS 呼ばず eventData から取る）
+        // ==========
+        const myStatus = eventData.myStatus || "未回答";
+        card.querySelector(".response-btn.yes").classList.toggle("selected", myStatus === "参加");
+        card.querySelector(".response-btn.no").classList.toggle("selected", myStatus === "不参加");
 
-        const myAnswer = result.personal ? result.personal[String(eventData.eventId)] || "" : "";
-        card.querySelector(".response-btn.yes").classList.toggle("selected", myAnswer === "参加");
-        card.querySelector(".response-btn.no").classList.toggle("selected", myAnswer === "不参加");
+        // メンバー一覧
+        fillResponseList(card.querySelector("ul.response-list.yes"), eventData.members.yes);
+        fillResponseList(card.querySelector("ul.response-list.no"), eventData.members.no);
+        fillResponseList(card.querySelector("ul.response-list.na"), eventData.members.na);
 
-        fillResponseList(card.querySelector("ul.response-list.yes"), result.yes);
-        fillResponseList(card.querySelector("ul.response-list.no"), result.no);
-        fillResponseList(card.querySelector("ul.response-list.na"), result.na);
+        // ボタンの人数表記
+        card.querySelector(".toggle-response-btn.yes").textContent = `参加者 ${eventData.members.yes.length}人`;
+        card.querySelector(".toggle-response-btn.no").textContent  = `不参加者 ${eventData.members.no.length}人`;
+        card.querySelector(".toggle-response-btn.na").textContent  = `未回答者 ${eventData.members.na.length}人`;
 
-        card.querySelector(".toggle-response-btn.yes").textContent = `参加者 ${result.yes.length}人`;
-        card.querySelector(".toggle-response-btn.no").textContent  = `不参加者 ${result.no.length}人`;
-        card.querySelector(".toggle-response-btn.na").textContent  = `未回答者 ${result.na.length}人`;
-
+        // ==========
+        // 演目（既存処理のまま必要なら eventData に追加）
+        // ==========
         const perfList = card.querySelector(".performance-list");
         perfList.innerHTML = "";
 
-        if (Array.isArray(result.performances)) {
-            result.performances.forEach(perf => {
+        if (Array.isArray(eventData.performances)) {
+            eventData.performances.forEach(perf => {
                 const li = document.createElement("li");
                 li.classList.add("performance-item");
 
@@ -754,9 +764,10 @@ async function fillDetailCard(eventData, userId, card) {
             });
         }
 
+        // 初期状態では非表示
         card.querySelectorAll(".response-list").forEach(ul => ul.style.display = "none");
 
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     } finally {
         if (loadingOverlay) loadingOverlay.style.display = "none";
