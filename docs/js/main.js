@@ -655,7 +655,6 @@ document.addEventListener("DOMContentLoaded", () => {
 API 連携ロジック (回答更新 & 詳細表示)
 ======================================================= */
 async function updateResponse(eventId, answer, card, userId) {
-    const overlay = card.querySelector(".loading-overlay");
     if (overlay) overlay.style.display = "flex";
     try {
         const result = await callGasApi({ action: "updateEventResponse", eventId, userId, answer });
