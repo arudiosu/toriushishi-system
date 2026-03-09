@@ -35,10 +35,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadEventEvents();    
     loadMembersUser();   
     if (userRole === "admin") loadMembersAdmin();
+
+     // イベント情報取得
+    await getEvents();
 });
 
-    // イベント情報取得
-    await getEvents();
+
 
 /* =======================================================
 ローディング画面
