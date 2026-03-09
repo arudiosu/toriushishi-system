@@ -186,8 +186,9 @@ function initEventDelegation() {
 
             switch (tabId) {
                 case "home":
-                    showSkeleton([homeScheduleContainer]);
-                    await loadHomeEvents();
+                    // showSkeleton([homeScheduleContainer]);
+                    // await loadHomeEvents();
+                    location.reload();
                     break;
 
                 case "event":
