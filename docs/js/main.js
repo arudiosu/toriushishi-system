@@ -655,7 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
 API 連携ロジック (回答更新 & 詳細表示)
 ======================================================= */
 async function updateResponse(eventId, answer, card, userId) {
-    if (overlay) overlay.style.display = "flex";
+    if (loadingOverlay) loadingOverlay.style.display = "flex";
     try {
         const result = await callGasApi({ action: "updateEventResponse", eventId, userId, answer });
         
@@ -670,7 +670,7 @@ async function updateResponse(eventId, answer, card, userId) {
         card.querySelector(".toggle-response-btn.no").textContent  = `不参加者 ${result.no.length}人`;
         card.querySelector(".toggle-response-btn.na").textContent  = `未回答者 ${result.na.length}人`;
     } catch(e) { console.error(e); }
-    if (overlay) overlay.style.display = "none";
+    if (loadingOverlay) loadingOverlay.style.display = "none";
 }
 
 async function fillDetailCard(eventData, userId, card) {
