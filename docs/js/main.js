@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initEventDelegation();
     initChatBot();
     initCalendar();
+    await getEvents();
 
     // スケルトン表示（ユーザーID不要）
     scheduleContainer = [
@@ -91,36 +92,34 @@ function showSkeleton(containers) {
 /* =======================================================
 イベント取得・描画
 ======================================================= */
-async function loadHomeEvents() {
+async function getEvents() {
     try {
         const res = await callGasApi({ action: "getEventsWithStats", userId });
-        
-        // res.success が true かつ、res.events が存在するかチェック
+
         if (res && res.success && Array.isArray(res.events)) {
-            homeScheduleContainer.innerHTML = "";
-            renderScheduleHome(res.events); // 配列部分だけを渡す
+            events = res.events;
         } else {
-            console.error("データ取得に失敗しました:", res.msg);
+            console.error("データ取得失敗:", res?.msg);
+            events = [];
         }
-    } catch(e) { 
-        console.error("Homeロード失敗:", e); 
+
+    } catch (e) {
+        console.error("イベント取得エラー:", e);
+        events = [];
     }
 }
 
-async function loadEventEvents() {
-    try {
-        const res = await callGasApi({ action: "getEventsWithStats", userId });
-        
-        if (res && res.success && Array.isArray(res.events)) {
-            eventActiveScheduleContainer.innerHTML = "";
-            eventPastScheduleContainer.innerHTML = "";
-            renderScheduleEvent(res.events); // 配列部分だけを渡す
-        } else {
-            console.error("データ取得に失敗しました:", res.msg);
-        }
-    } catch(e) { 
-        console.error("Eventロード失敗:", e); 
-    }
+function loadHomeEvents() {
+    homeScheduleContainer.innerHTML = "";
+    renderScheduleHome(events);
+}
+
+function loadEventEvents() {
+
+    eventActiveScheduleContainer.innerHTML = "";
+    eventPastScheduleContainer.innerHTML = "";
+
+    renderScheduleEvent(events);
 }
 
 function renderScheduleHome(events) {
