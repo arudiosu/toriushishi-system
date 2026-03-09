@@ -182,31 +182,9 @@ function initEventDelegation() {
         const target = event.target;
         // リロード
         if (target.closest(".reload-btn")) {
-            const tabId = target.closest(".tab-content")?.id;
-
-            switch (tabId) {
-                case "home":
-                    // showSkeleton([homeScheduleContainer]);
-                    // await loadHomeEvents();
-                    location.reload();
-                    break;
-
-                case "event":
-                    showSkeleton([
-                        eventActiveScheduleContainer,
-                        eventPastScheduleContainer
-                    ]);
-                    await loadEventEvents();
-                    break;
-
-                // case "user":
-                //     // await loadMembersUser();
-                //     // console.log("on");
-                //     break;
-            }
+            location.reload();
             return;
         }
-
 
         // イベントカード全体タップ
         const eventCard = target.closest("[data-event-id]");
