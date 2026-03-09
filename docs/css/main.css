@@ -688,7 +688,6 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* 折りたたみリスト */
 .response-list {
-    max-height: 250px;
     overflow-y: auto;
     list-style: none;
     padding-left: 0;
@@ -1072,13 +1071,30 @@ li {
     font-weight: bold;
 }
 
-/* イベントありドット */
-.day .event-dot {
-    width: 6px;
-    height: 6px;
-    bottom: 4px;
-    left: 4px;
+.day {
+    position: relative;
+    text-align: center;       /* 日付も中央寄せ */
 }
+
+.day .dots {
+    display: flex;
+    justify-content: center;  /* 真ん中に並べる */
+    gap: 4px;                 /* ドット同士の間隔 */
+    position: absolute;
+    bottom: 8px;              /* 下から少し上げる */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.event-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.event-dot.festival { background: red; }
+.event-dot.regular  { background: blue; }
+.event-dot.practice { background: white; }
 
 /* イベントカード */
 .event-card {
@@ -1091,4 +1107,3 @@ li {
     font-size: 0.8rem; /* ← テキスト少し圧縮 */
 }
 
-/* bottom: calc(5rem + env(safe-area-inset-bottom) + 1rem); ボトムナビの高さ分上に */

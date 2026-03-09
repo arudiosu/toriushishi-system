@@ -7,6 +7,7 @@ const eventPastScheduleContainer = document.getElementById("event-past-schedule"
 const loadingOverlay = document.getElementById("globalLoading");
 let scheduleContainer = [];
 let eventMap = {}; 
+let practiceMap = {}; 
 
 
 /* =======================================================
@@ -20,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initBottomNav();
     initEventDelegation();
     initChatBot();
-    initCalendar();
+
 
     // スケルトン表示
     scheduleContainer = [
@@ -35,13 +36,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // ★ 先にイベント取得
     await getEvents();
+    await getPractices();
 
     // ★ 取得したデータで描画
     loadHomeEvents();   
-    loadEventEvents();    
+    loadEventEvents();   
 
     loadMembersUser();   
     if (userRole === "admin") loadMembersAdmin();
+
+    initCalendar();
 
 });
 
@@ -117,19 +121,28 @@ async function getEvents() {
     }
 }
 
-async function getPractice() {
+async function getPractices() {
     try {
-        const res = await callGasApi({ action: "getPractice", userId });
+        const res = await callGasApi({ action: "getPracticeWithStats", userId });
 
         if (res && res.success && Array.isArray(res.practices)) {
             practices = res.practices;
+
+            // practiceMap に格納（eventMap と同じ形式）
+            practiceMap = {};
+            practices.forEach(p => {
+                practiceMap[p.practiceId] = p;
+            });
+
         } else {
             console.error("データ取得失敗:", res?.msg);
             practices = [];
+            practiceMap = {};
         }
     } catch (e) {
         console.error("practice取得エラー:", e);
         practices = [];
+        practiceMap = {};
     }
 }
 
@@ -848,6 +861,9 @@ function initCalendar() {
 }
 
 function generateCalendar(year, month) {
+    function normalize(dateStr) {
+        return dateStr.replace(/-/g, "/").split(" ")[0];
+    }
 
     const cal = document.getElementById("calendarArea");
     cal.innerHTML = "";
@@ -857,7 +873,6 @@ function generateCalendar(year, month) {
     const startWeekday = firstDay.getDay();
     const totalDays = lastDay.getDate();
 
-    // 曜日リスト（表記は好きに変更可）
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 
     let html = `
@@ -870,26 +885,47 @@ function generateCalendar(year, month) {
         <div class="cal-grid">
     `;
 
-    // ① 曜日ヘッダー -----------------------------------------------------
     for (let w of weekdays) {
         html += `<div class="cal-weekday">${w}</div>`;
     }
 
-    // ② 前の月の空白 -----------------------------------------------------
     for (let i = 0; i < startWeekday; i++) {
         html += `<div class="empty"></div>`;
     }
 
-    // ③ 日付を並べる -----------------------------------------------------
     for (let d = 1; d <= totalDays; d++) {
-        const fullDate = `${year}/${month+1}/${d}`;
-        html += `<div class="day" data-date="${fullDate}">${d}</div>`;
+
+    const fullDate =
+    `${year}/${String(month+1).padStart(2,"0")}/${String(d).padStart(2,"0")}`;
+
+    // 祭り・通常イベント（eventMap）
+    const event = Object.values(eventMap).find(
+        e => normalize(e.date) === normalize(fullDate)
+    );
+
+    // 練習日（practiceMap）
+    const practice = Object.values(practiceMap).find(
+        p => normalize(p.date) === normalize(fullDate)
+    );
+
+    let dots = "";
+    if (event?.type === "festival") dots += '<span class="event-dot festival"></span>';
+    if (event?.type === "regular")  dots += '<span class="event-dot regular"></span>';
+    if (practice)                    dots += '<span class="event-dot practice"></span>';
+
+    html += `
+    <div class="day" data-date="${fullDate}">
+        ${d}
+        <div class="dots">
+            ${dots}
+        </div>
+    </div>
+    `;
     }
 
     html += `</div>`;
     cal.innerHTML = html;
 
-    // ④ 月移動 -----------------------------------------------------------
     cal.querySelector(".prev").addEventListener("click", () => {
         const prev = new Date(year, month - 1);
         generateCalendar(prev.getFullYear(), prev.getMonth());
@@ -900,7 +936,6 @@ function generateCalendar(year, month) {
         generateCalendar(next.getFullYear(), next.getMonth());
     });
 
-    // ⑤ 日付クリック ------------------------------------------------------
     cal.querySelectorAll(".day").forEach(day => {
         day.addEventListener("click", () => {
             const date = day.dataset.date;
