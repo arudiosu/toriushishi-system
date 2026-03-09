@@ -13,6 +13,7 @@ let eventMap = {};
 初期処理
 ======================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
+
     initLoadingScreen();
 
     // UI は先に使えるようにする
@@ -21,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initChatBot();
     initCalendar();
 
-    // スケルトン表示（ユーザーID不要）
+    // スケルトン表示
     scheduleContainer = [
         homeScheduleContainer,
         eventActiveScheduleContainer,
@@ -31,13 +32,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const ok = await checkSessionAndGetUserId();
     if (!ok) return;
+
+    // ★ 先にイベント取得
+    await getEvents();
+
+    // ★ 取得したデータで描画
     loadHomeEvents();   
     loadEventEvents();    
+
     loadMembersUser();   
     if (userRole === "admin") loadMembersAdmin();
 
-     // イベント情報取得
-    await getEvents();
 });
 
 
