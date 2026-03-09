@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     initEventDelegation();
     initChatBot();
     initCalendar();
-    await getEvents();
 
     // スケルトン表示（ユーザーID不要）
     scheduleContainer = [
@@ -38,6 +37,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (userRole === "admin") loadMembersAdmin();
 });
 
+    // イベント情報取得
+    await getEvents();
 
 /* =======================================================
 ローディング画面
