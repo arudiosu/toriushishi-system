@@ -278,13 +278,16 @@ function renderScheduleEvent(events) {
 function createPracticeCard(pr) {
 
     const card = document.createElement("div");
-    card.className = "event-practice"; 
+    card.className = "event-practice";
     card.dataset.practiceId = pr.practiceId;
 
     card.innerHTML = `
         <div class="practice-date">${pr.date}</div>
         <div class="practice-title">${pr.title || "練習日"}</div>
-        <div class="responses-list">不参加:${pr.no}</div>
+        <div class="answer">${pr.myStatus || ""}</div>
+        <div class="responses-list">
+            欠席:${pr.absent.length} 遅れる:${pr.late.length}
+        </div>
     `;
 
     return card;
@@ -378,8 +381,8 @@ function initEventDelegation() {
                 // ▲▲▲ ここまで追加 ▲▲▲
 
                 let answer = "";
-                if (responseBtn.classList.contains("absent")) answer = "休む";
-                if (responseBtn.classList.contains("late")) answer = "遅れる";
+                if (responseBtn.classList.contains("absent")) answer = "欠席";
+                if (responseBtn.classList.contains("late")) answer = "遅刻";
 
                 await updatePracticeResponse(practiceId, answer, practiceCard, userId);
                 return;
@@ -832,98 +835,30 @@ async function updatePracticeResponse(practiceId, answer, card, userId) {
             answer
         });
 
-        // ボタン選択状態を反映
+        // ▼ ボタン選択状態
         card.querySelector(".response-btn.absent")?.classList
-            .toggle("selected", answer === "休む");
+            .toggle("selected", answer === "欠席");
         card.querySelector(".response-btn.late")?.classList
-            .toggle("selected", answer === "遅れる");
+            .toggle("selected", answer === "遅刻");
 
-        // リストの書き換え（イベント版と同じ）
-        fillResponseList(card.querySelector("ul.response-list.absent"), result.absent);
-        fillResponseList(card.querySelector("ul.response-list.late"), result.late);
+        // ▼▼ ここが重要。必ず「card の中を検索」する ▼▼
+        const absentListElem = card.querySelector("ul.response-list.absent");
+        const lateListElem   = card.querySelector("ul.response-list.late");
 
-        // 見出し（toggle ボタン）の人数更新
-        card.querySelector(".toggle-response-btn.absent").textContent = `欠席 ${result.absent.length}人`;
-        card.querySelector(".toggle-response-btn.late").textContent   = `遅れて参加 ${result.late.length}人`;
+        fillResponseList(absentListElem, result.absent);
+        fillResponseList(lateListElem, result.late);
+
+        // ▼ 見出し更新（必ず card の中だけ）
+        card.querySelector(".toggle-response-btn.absent").textContent =
+            `欠席 ${result.absent.length}人`;
+
+        card.querySelector(".toggle-response-btn.late").textContent =
+            `遅刻 ${result.late.length}人`;
 
     } catch (e) {
         console.error(e);
     }
     if (loadingOverlay) loadingOverlay.style.display = "none";
-}
-
-async function fillDetailCard(eventData, userId, card) {
-
-    if (loadingOverlay) loadingOverlay.style.display = "flex";
-
-    const editBtn = card.querySelector(".edit-event-btn");
-    editBtn.style.display = (userRole === "admin") ? "block" : "none";
-
-    try {
-        // ==========
-        // 基本情報
-        // ==========
-        card.querySelector(".event-detail-card-title").textContent = eventData.title || "";
-        card.querySelector(".event-detail-card-date").textContent = eventData.date || "";
-        card.querySelector(".event-detail-card-time-text").textContent = eventData.time || "";
-        card.querySelector(".event-detail-card-location").textContent = eventData.location || "場所未設定";
-        card.querySelector(".event-detail-card-comment").textContent = eventData.comment || "";
-
-        // ==========
-        // 回答状況（GAS 呼ばず eventData から取る）
-        // ==========
-        const myStatus = eventData.myStatus || "未回答";
-        card.querySelector(".response-btn.yes").classList.toggle("selected", myStatus === "参加");
-        card.querySelector(".response-btn.no").classList.toggle("selected", myStatus === "不参加");
-
-        // メンバー一覧
-        fillResponseList(card.querySelector("ul.response-list.yes"), eventData.members.yes);
-        fillResponseList(card.querySelector("ul.response-list.no"), eventData.members.no);
-        fillResponseList(card.querySelector("ul.response-list.na"), eventData.members.na);
-
-        // ボタンの人数表記
-        card.querySelector(".toggle-response-btn.yes").textContent = `参加者 ${eventData.members.yes.length}人`;
-        card.querySelector(".toggle-response-btn.no").textContent  = `不参加者 ${eventData.members.no.length}人`;
-        card.querySelector(".toggle-response-btn.na").textContent  = `未回答者 ${eventData.members.na.length}人`;
-
-        // ==========
-        // 演目（既存処理のまま必要なら eventData に追加）
-        // ==========
-        const perfList = card.querySelector(".performance-list");
-        perfList.innerHTML = "";
-
-        if (Array.isArray(eventData.performances)) {
-            eventData.performances.forEach(perf => {
-                const li = document.createElement("li");
-                li.classList.add("performance-item");
-
-                const nameSpan = document.createElement("span");
-                nameSpan.classList.add("performance-name");
-                nameSpan.textContent = perf.name || "未設定";
-                li.appendChild(nameSpan);
-
-                if (perf.roles) {
-                    const rolesText = Object.entries(perf.roles)
-                        .map(([role, person]) => `${role}: ${person || "未設定"}`)
-                        .join(" / ");
-                    const rolesSpan = document.createElement("span");
-                    rolesSpan.classList.add("performance-roles");
-                    rolesSpan.textContent = " - " + rolesText;
-                    li.appendChild(rolesSpan);
-                }
-
-                perfList.appendChild(li);
-            });
-        }
-
-        // 初期状態では非表示
-        card.querySelectorAll(".response-list").forEach(ul => ul.style.display = "none");
-
-    } catch (e) {
-        console.error(e);
-    } finally {
-        if (loadingOverlay) loadingOverlay.style.display = "none";
-    }
 }
 
 function fillResponseList(ulElement, names) {
@@ -1090,68 +1025,87 @@ function generateCalendar(year, month) {
         <div class="cal-grid">
     `;
 
+    // 曜日
     for (let w of weekdays) {
         html += `<div class="cal-weekday">${w}</div>`;
     }
 
+    // 空白
     for (let i = 0; i < startWeekday; i++) {
         html += `<div class="empty"></div>`;
     }
 
+    // 日付を生成
     for (let d = 1; d <= totalDays; d++) {
 
-    const fullDate =
-    `${year}/${String(month+1).padStart(2,"0")}/${String(d).padStart(2,"0")}`;
+        const fullDate =
+            `${year}/${String(month+1).padStart(2,"0")}/${String(d).padStart(2,"0")}`;
 
-    // 祭り・通常イベント（eventMap）
-    const event = Object.values(eventMap).find(
-        e => normalize(e.date) === normalize(fullDate)
-    );
+        const event = Object.values(eventMap).find(
+            e => normalize(e.date) === normalize(fullDate)
+        );
 
-    // 練習日
-    const practice = Object.values(practiceMap).find(
-        p => normalize(p.date) === normalize(fullDate)
-    );
+        const practice = Object.values(practiceMap).find(
+            p => normalize(p.date) === normalize(fullDate)
+        );
 
-    let dots = "";
-    if (event?.type === "festival") dots += '<span class="event-dot festival"></span>';
-    if (event?.type === "regular")  dots += '<span class="event-dot regular"></span>';
-    if (practice)                    dots += '<span class="event-dot practice"></span>';
+        let dots = "";
+        if (event?.type === "festival") dots += '<span class="event-dot festival"></span>';
+        if (event?.type === "regular")  dots += '<span class="event-dot regular"></span>';
+        if (practice)                    dots += '<span class="event-dot practice"></span>';
 
-    html += `
-    <div class="day" data-date="${fullDate}">
-        ${d}
-        <div class="dots">
-            ${dots}
-        </div>
-    </div>
-    `;
+        html += `
+            <div class="day" data-date="${fullDate}">
+                ${d}
+                <div class="dots">${dots}</div>
+            </div>
+        `;
     }
 
     html += `</div>`;
     cal.innerHTML = html;
 
+    // ▼ 日をクリックしたときの処理を関数化
+    function selectDay(dayElem) {
+        // 既存の selected を全部外す
+        cal.querySelectorAll(".day.selected")
+            .forEach(el => el.classList.remove("selected"));
+
+        // 選択
+        dayElem.classList.add("selected");
+
+        // ロード
+        const date = dayElem.dataset.date;
+        loadEventByDate(date);
+    }
+
+    // ▼ 日クリックイベント
+    cal.querySelectorAll(".day").forEach(day => {
+        day.addEventListener("click", () => selectDay(day));
+    });
+
+    // ▼ 今日の月ならロード時に自動選択する
+    const now = new Date();
+    if (now.getFullYear() === year && now.getMonth() === month) {
+
+        const todayStr =
+            `${year}/${String(month+1).padStart(2,"0")}/${String(now.getDate()).padStart(2,"0")}`;
+
+        const todayCell = cal.querySelector(`.day[data-date="${todayStr}"]`);
+        if (todayCell) {
+            selectDay(todayCell); // ← ← ← クリック処理をそのまま実行！
+        }
+    }
+
+    // ▼ prev / next はそのまま
     cal.querySelector(".prev").addEventListener("click", () => {
         const prev = new Date(year, month - 1);
-        showCalendarSkeleton();  // ← 追加
-        setTimeout(() => {
-            generateCalendar(prev.getFullYear(), prev.getMonth());
-        }, 50);
+        generateCalendar(prev.getFullYear(), prev.getMonth());
     });
 
     cal.querySelector(".next").addEventListener("click", () => {
         const next = new Date(year, month + 1);
-        showCalendarSkeleton();  // ← 追加
-        setTimeout(() => {
-            generateCalendar(next.getFullYear(), next.getMonth());
-        }, 50);
-    });
-
-    cal.querySelectorAll(".day").forEach(day => {
-        day.addEventListener("click", () => {
-            const date = day.dataset.date;
-            loadEventByDate(date);
-        });
+        generateCalendar(next.getFullYear(), next.getMonth());
     });
 }
 

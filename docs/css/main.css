@@ -1254,12 +1254,9 @@ li {
     background: #2d3e55;
 }
 
-.day.today {
+.day.selected {
     background: #245a9f;
-    border: 2px solid #4a90e2;
-    font-weight: bold;
 }
-
 .day {
     position: relative;
     text-align: center;       /* 日付も中央寄せ */
