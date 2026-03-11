@@ -9,7 +9,7 @@
 </head>
 
 <body>
-<p id="version">demo v0.3.4</p>
+<p id="version">demo v0.4.0</p>
 
 <div id="loading">
     <img src="images/鳥生獅子連中＿loading.png" alt="ローディング" class="loading-img rotating">
@@ -156,6 +156,8 @@
 
 <!-- 詳細カード HTML -->
 <div id="hidecontents">
+
+    <!-- イベント詳細カード -->
     <div class="event-detail-card" id="eventDetailCard">
 
         <button class="close-card-btn" data-target="event">戻る</button>
@@ -201,6 +203,47 @@
         <button class="toggle-performances-btn">演目一覧</button>
         <ul class="performance-list"></ul>
         </div>
+    </div>
+
+    <!-- 練習詳細カード -->
+    <div class="practice-detail-card" id="practiceDetailCard">
+
+        <button class="close-card-btn" data-target="practice">戻る</button>
+
+        <!-- タイトル -->
+        <div class="practice-detail-card-title"></div>
+
+        <!-- 日付・時間 -->
+        <div class="practice-detail-card-time">
+            <div class="practice-detail-card-date"></div>
+            <div class="practice-detail-card-time-text"></div>
+            <div class="practice-detail-card-location"></div>
+        </div>
+
+        <!-- 回答：休む・遅れる -->
+        <div class="practice-detail-card-responses">
+
+            <div class="response-btn-group">
+                <button class="response-btn absent">欠席</button>
+                <button class="response-btn late">遅れて参加</button>
+            </div>
+
+            <!-- コメント -->
+            <div class="practice-detail-card-comment"></div>
+
+            <!-- メンバーリスト -->
+            <div class="response-section absent">
+                <button class="toggle-response-btn absent">欠席</button>
+                <ul class="response-list absent"></ul>
+            </div>
+
+            <div class="response-section late">
+                <button class="toggle-response-btn late">遅れて参加</button>
+                <ul class="response-list late"></ul>
+            </div>
+
+        </div>
+
     </div>
 
     <!-- イベント新規作成 -->

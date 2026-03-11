@@ -40,6 +40,24 @@ body {
     display: block;
 }
 
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #1e1e1e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 101;
+}
+
+.loading-overlay img {
+width: 120px; /* 適宜調整 */
+height: 120px;
+}
+
 /* ローディング後に表示されるメインコンテンツ */
 #main-content {
     display: none;
@@ -91,12 +109,9 @@ body {
     z-index: auto;
 }
 
-
-
 .tab-content.active {
     display: block;
 }
-
 
 /* --- ボトムナビ --- */
 .bottom-nav {
@@ -330,7 +345,7 @@ scroll-behavior: smooth;
     z-index: 0;
 }
 
-.event-festival, .event-regular {
+.event-festival, .event-regular, .event-practice {
     display: flex;
     flex-direction: column;  /* ← これで縦並びに */
     justify-content: center;
@@ -340,7 +355,6 @@ scroll-behavior: smooth;
     padding: 12px 16px 16px;
     border-radius: 20px;
     position: relative;
-    color: #fff;
 
     /* 浮かせる影（アプリ感UP） */
     box-shadow: 0 8px 20px rgba(0,0,0,0.35);
@@ -353,7 +367,8 @@ scroll-behavior: smooth;
 
 /* 左のカラーアクセントライン */
 .event-festival::before,
-.event-regular::before {
+.event-regular::before,
+.event-practice::before {
     content: "";
     position: absolute;
     left: 0;
@@ -367,6 +382,7 @@ scroll-behavior: smooth;
 /* 色 */
 .event-festival {
     background: #7a1515;
+    color: #fff;
 }
 .event-festival::before {
     background: #ff4a4a;
@@ -374,9 +390,18 @@ scroll-behavior: smooth;
 
 .event-regular {
     background: #1f2f7f;
+    color: #fff;
 }
 .event-regular::before {
     background: #4d7cff;
+}
+
+.event-practice {
+    background: #dbdbdb;
+    color: #000000;
+}
+.event-practice::before {
+    background: #797979;
 }
 
 .event-status {
@@ -385,7 +410,7 @@ scroll-behavior: smooth;
 }
 
 /* 日付 */
-.event-date {
+.event-date, .practice-date {
     font-size: 0.9rem;
     font-weight: 600;
     opacity: 0.9;
@@ -393,7 +418,7 @@ scroll-behavior: smooth;
 }
 
 /* タイトル */
-.event-title {
+.event-title, .practice-title {
     position: relative;
     font-size: 1.25rem;
     font-weight: 700;
@@ -422,11 +447,6 @@ scroll-behavior: smooth;
     font-size: 0.85rem;
 }
 
-.event-detail-card-comment {
-    border: 2px solid #636363;
-    white-space: pre-wrap;
-}
-
 .deadline {
     position: absolute;
     right: 8px;
@@ -439,24 +459,6 @@ scroll-behavior: smooth;
 /* =======================================================
 イベント詳細カード
 ======================================================= */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #1e1e1e;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 101;
-}
-
-.loading-overlay img {
-width: 120px; /* 適宜調整 */
-height: 120px;
-}
-
 .event-detail-card {
     position: fixed;
     inset: 0;
@@ -497,6 +499,251 @@ height: 120px;
 }
 .event-detail-card-date { color: #bbbbbb; font-size: 1.2rem; }
 .event-detail-card-time-text { font-size: 1.2rem; color: #fff; }
+
+.event-detail-card-comment {
+    border: 2px solid #636363;
+    white-space: pre-wrap;
+}
+
+/* =======================================================
+参加・不参加・未回答ボタン
+======================================================= */
+.event-detail-card-responses {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 横並びボタン */
+.response-btn-group {
+    display: flex;
+    gap: 12px;
+}
+.response-btn-group .response-btn {
+    flex: 1;             /* 2列で幅を均等に */
+    font-size: 1rem;
+    padding: 12px 0;
+}
+
+/* ボタン共通 */
+.response-btn {
+    width: 100%;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    transition: 0.2s;
+}
+.response-btn.selected { transform: scale(1.05); }
+
+/* 色 */
+.response-btn.yes { background-color: #7CFF8A; }
+.response-btn.yes.selected { background-color: #00D83A; box-shadow: 0 0 10px rgba(0,255,80,0.7); }
+.response-btn.no  { background-color: #FF6E6E; }
+.response-btn.no.selected  { background-color: #FF2B2B; box-shadow: 0 0 10px rgba(255,80,80,0.7); }
+.response-btn.na  { background-color: #999; }
+.response-btn.na.selected { background-color: #555; }
+
+/* 折りたたみリスト */
+.response-list {
+    overflow-y: auto;
+    list-style: none;
+    padding-left: 0;
+    margin: 4px 0 12px 0;
+}
+.response-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    background: #1f1f1f;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    font-size: 1rem;
+    color: #fff;
+}
+.response-list li .count {
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+/* 折りたたみボタン */
+.toggle-response-btn, .toggle-performances-btn {
+    width: 100%;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.3s;
+}
+.toggle-response-btn:hover, .toggle-performances-btn:hover { background: #444; }
+.toggle-response-btn.open::after, .toggle-performances-btn.open::after { content: "▲"; float: right; }
+.toggle-response-btn::after, .toggle-performances-btn::after { content: "▼"; float: right; }
+
+
+/* =======================================================
+練習詳細カード
+======================================================= */
+.practice-detail-card {
+    position: fixed;
+    inset: 0;
+    background: #1e1e1e;
+    z-index: 99;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 70px 24px 24px;
+    gap: 16px;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    transform: translateY(100%);
+    transition: transform 0.45s ease-out;
+    overflow-y: auto;
+}
+
+.practice-detail-card.active {
+    transform: translateY(0);
+}
+
+/* タイトル */
+.practice-detail-card-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-top: 4px;
+    border-left: 4px solid #4fa3ff; /* ← 練習用に色を青に変更（任意） */
+    padding-left: 12px;
+}
+
+/* 日付・時間 */
+.practice-detail-card-time {
+    padding: 16px;
+    background: #2c2c2c;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.practice-detail-card-date {
+    color: #bbbbbb;
+    font-size: 1.2rem;
+}
+
+.practice-detail-card-time-text {
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.practice-detail-card-location {
+    color: #ddd;
+    font-size: 1rem;
+}
+
+/* コメント */
+.practice-detail-card-comment {
+    border: 2px solid #636363;
+    white-space: pre-wrap;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+/* =======================================================
+    練習：休む・遅れる ボタン + リスト
+======================================================= */
+.practice-detail-card-responses {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 横並びボタン */
+.practice-detail-card-responses .response-btn-group {
+    display: flex;
+    gap: 12px;
+}
+
+.practice-detail-card-responses .response-btn {
+    flex: 1;
+    font-size: 1rem;
+    padding: 12px 0;
+    width: 100%;
+    border-radius: 12px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    transition: 0.2s;
+}
+
+.practice-detail-card-responses .response-btn.selected {
+    transform: scale(1.05);
+}
+
+/* ボタン色（練習用） */
+.response-btn.absent { background-color: #f55b35; }        /* 休む */
+.response-btn.absent.selected { background-color: #FF2B2B; box-shadow: 0 0 10px rgba(255,80,80,0.7); }
+
+.response-btn.late { background-color: #1ea1a1; }          /* 遅れる */
+.response-btn.late.selected { background-color: #FFCC00; box-shadow: 0 0 10px rgba(255,220,80,0.7); }
+
+/* リスト */
+.practice-detail-card-responses .response-list {
+    overflow-y: auto;
+    list-style: none;
+    padding-left: 0;
+    margin: 4px 0 12px 0;
+}
+
+.practice-detail-card-responses .response-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    background: #1f1f1f;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    font-size: 1rem;
+    color: #fff;
+}
+
+/* 折りたたみ */
+.practice-detail-card-responses .toggle-response-btn {
+    width: 100%;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.3s;
+}
+
+.practice-detail-card-responses .toggle-response-btn:hover {
+    background: #444;
+}
+
+.practice-detail-card-responses .toggle-response-btn::after {
+    content: "▼";
+    float: right;
+}
+
+.practice-detail-card-responses .toggle-response-btn.open::after {
+    content: "▲";
+}
+
 
 /* ====================================
     イベント作成カード 共通デザイン調整
@@ -644,88 +891,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     background-color: #1e1e1e;
 }
 
-/* =======================================================
-参加・不参加・未回答ボタン
-======================================================= */
-.event-detail-card-responses {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
 
-/* 横並びボタン */
-.response-btn-group {
-    display: flex;
-    gap: 12px;
-}
-.response-btn-group .response-btn {
-    flex: 1;             /* 2列で幅を均等に */
-    font-size: 1rem;
-    padding: 12px 0;
-}
-
-/* ボタン共通 */
-.response-btn {
-    width: 100%;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 1rem;
-    color: #fff;
-    cursor: pointer;
-    border: none;
-    position: relative;
-    transition: 0.2s;
-}
-.response-btn.selected { transform: scale(1.05); }
-
-/* 色 */
-.response-btn.yes { background-color: #7CFF8A; }
-.response-btn.yes.selected { background-color: #00D83A; box-shadow: 0 0 10px rgba(0,255,80,0.7); }
-.response-btn.no  { background-color: #FF6E6E; }
-.response-btn.no.selected  { background-color: #FF2B2B; box-shadow: 0 0 10px rgba(255,80,80,0.7); }
-.response-btn.na  { background-color: #999; }
-.response-btn.na.selected { background-color: #555; }
-
-/* 折りたたみリスト */
-.response-list {
-    overflow-y: auto;
-    list-style: none;
-    padding-left: 0;
-    margin: 4px 0 12px 0;
-}
-.response-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    margin-bottom: 4px;
-    border-radius: 10px;
-    background: #1f1f1f;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    font-size: 1rem;
-    color: #fff;
-}
-.response-list li .count {
-    opacity: 0.8;
-    font-size: 0.95rem;
-}
-
-/* 折りたたみボタン */
-.toggle-response-btn, .toggle-performances-btn {
-    width: 100%;
-    background: #333;
-    color: #fff;
-    font-weight: bold;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.3s;
-}
-.toggle-response-btn:hover, .toggle-performances-btn:hover { background: #444; }
-.toggle-response-btn.open::after, .toggle-performances-btn.open::after { content: "▲"; float: right; }
-.toggle-response-btn::after, .toggle-performances-btn::after { content: "▼"; float: right; }
 
 /* =======================================================
 演目リスト
@@ -1001,6 +1167,28 @@ li {
 /* ---------------------------------------- */
     /* カレンダー */
 /* ---------------------------------------- */
+
+/* スケルトン */
+.skeleton-box {
+    background: #ddd;
+    border-radius: 6px;
+    animation: pulse 1.4s infinite ease-in-out;
+}
+
+.skeleton-text {
+    display: inline-block;
+    background: #ececec;
+    border-radius: 4px;
+    color: transparent;
+    animation: pulse 1.4s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% { opacity: .6; }
+    50% { opacity: 1; }
+    100% { opacity: .6; }
+}
+
 /* 全体のレイアウト（現状維持） */
 .calendar-form {
     height: 100%;
@@ -1039,6 +1227,7 @@ li {
     color: #ccc;
     font-weight: bold;
     font-size: 0.85rem; /* ← 少し小さく */
+    text-align: center;
 }
 
 /* カレンダー網目 */
@@ -1051,8 +1240,8 @@ li {
 /* 日付セル */
 .day {
     text-align: right;
-    padding: 5px; /* ← パディング縮める */
-    height: 50px; /* ← 70px → 55px に縮める */
+    padding: 5px;
+    height: 45px;
     background: #1a1a1a;
     color: #fff;
     border-radius: 6px;

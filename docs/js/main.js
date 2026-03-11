@@ -5,6 +5,7 @@ const homeScheduleContainer = document.getElementById("home-schedule");
 const eventActiveScheduleContainer = document.getElementById("event-active-schedule");
 const eventPastScheduleContainer = document.getElementById("event-past-schedule");
 const loadingOverlay = document.getElementById("globalLoading");
+const calendarArea = document.getElementById("calendarArea");
 let scheduleContainer = [];
 let eventMap = {}; 
 let practiceMap = {}; 
@@ -30,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         eventPastScheduleContainer
     ];
     showSkeleton(scheduleContainer);
+    showCalendarSkeleton();
 
     const ok = await checkSessionAndGetUserId();
     if (!ok) return;
@@ -40,16 +42,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // ★ 取得したデータで描画
     loadHomeEvents();   
-    loadEventEvents();   
-
+    loadEventEvents(); 
+    initCalendar();
     loadMembersUser();   
     if (userRole === "admin") loadMembersAdmin();
 
-    initCalendar();
+
 
 });
 
-
+/* =======================================================
+共通関数
+======================================================= */
+function normalize(str) {
+    return str.replace(/-/g, "/").split(" ")[0];
+}
 
 /* =======================================================
 ローディング画面
@@ -75,7 +82,7 @@ function hideLoading() {
 }
 
 /* =======================================================
-ボトムナビ & 役割チェック & スケルトン
+ボトムナビ
 ======================================================= */
 function initBottomNav() {
     document.querySelectorAll(".bottom-nav-btn").forEach(btn => {
@@ -89,6 +96,9 @@ function initBottomNav() {
     });
 }
 
+/* =======================================================
+スケルトン
+======================================================= */
 function showSkeleton(containers) {
     containers.forEach(container => {
         if(!container) return;
@@ -101,8 +111,34 @@ function showSkeleton(containers) {
     });
 }
 
+//カレンダースケルトン
+function showCalendarSkeleton() {
+    calendarArea.innerHTML = generateCalendarSkeleton();
+}
+
+function generateCalendarSkeleton() {
+    const weeks = 6;
+    const cols = 7;
+
+    let html = `
+        <div class="cal-grid">
+    `;
+
+    // 日付部分
+    for (let i = 0; i < weeks * cols; i++) {
+        html += `
+            <div class="day">
+                <div class="skeleton-box" style="height:40px;"></div>
+            </div>
+        `;
+    }
+
+    html += `</div>`; // cal-grid 終わり
+    return html;
+}
+
 /* =======================================================
-イベント取得・描画
+イベント・練習　取得
 ======================================================= */
 async function getEvents() {
     try {
@@ -171,56 +207,87 @@ function loadEventEvents() {
     renderScheduleEvent(events);
 }
 
+/* =======================================================
+イベントカード描画
+======================================================= */
+function createEventCard(ev, options = {}) {
+    const { includeDeadline = false } = options;
+
+    const className = ev.type === "festival"
+        ? "event-festival"
+        : "event-regular";
+
+    const card = document.createElement("div");
+    card.className = className;
+    card.dataset.eventId = ev.eventId;
+
+    card.innerHTML = `
+        <div class="event-date">${ev.date}</div>
+        <div class="event-title">${ev.title}</div>
+        <div class="answer">${ev.myStatus}</div>
+        <div class="responses-list">参加:${ev.yes} 不参加:${ev.no}</div>
+        ${includeDeadline ? `<div class="deadline">期限:${ev.deadline}</div>` : ""}
+    `;
+
+    return card;
+}
+
 function renderScheduleHome(events) {
-    if (!events) return;
-    const fragment = document.createDocumentFragment();
     const today = new Date(); today.setHours(0,0,0,0);
 
+    const fragment = document.createDocumentFragment();
+
     events.forEach(ev => {
-        const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
+        const eventDate = new Date(ev.date);
+        eventDate.setHours(0,0,0,0);
+
         if (eventDate >= today) {
             eventMap[ev.eventId] = ev;
-            const className = ev.type === "festival" ? "event-festival" : "event-regular";
-            const card = document.createElement("div");
-            card.className = className; card.dataset.eventId = ev.eventId;
-            card.innerHTML = `
-                <div class="event-date">${ev.date}</div>
-                <div class="event-title">${ev.title}</div>
-                <div class="answer">${ev.myStatus}</div>
-                <div class="responses-list">参加:${ev.yes} 不参加:${ev.no}</div>
-                <div class="deadline">期限:${ev.deadline}</div>
-            `;
-            fragment.appendChild(card);
+            fragment.appendChild(createEventCard(ev, { includeDeadline: true }));
         }
     });
+
     homeScheduleContainer.appendChild(fragment);
 }
 
 function renderScheduleEvent(events) {
-    if (!events || !Array.isArray(events)) return;
-    const activeFragment = document.createDocumentFragment();
-    const pastFragment = document.createDocumentFragment();
     const today = new Date(); today.setHours(0,0,0,0);
 
-    events.forEach(ev => {
-        if (!ev || !ev.eventId) return;
-        eventMap[ev.eventId] = ev;
-        const className = ev.type === "festival" ? "event-festival" : "event-regular";
-        const card = document.createElement("div");
-        card.className = className; card.dataset.eventId = ev.eventId;
-        card.innerHTML = `
-            <div class="event-date">${ev.date}</div>
-            <div class="event-title">${ev.title}</div>
-            <div class="answer">${ev.myStatus}</div>
-            <div class="responses-list">参加:${ev.yes} 不参加:${ev.no}</div>
-        `;
+    const activeFragment = document.createDocumentFragment();
+    const pastFragment = document.createDocumentFragment();
 
-        const eventDate = new Date(ev.date); eventDate.setHours(0,0,0,0);
+    events.forEach(ev => {
+        const eventDate = new Date(ev.date);
+        eventDate.setHours(0,0,0,0);
+
+        eventMap[ev.eventId] = ev;
+
+        const card = createEventCard(ev);
+
         if (eventDate >= today) activeFragment.appendChild(card);
         else pastFragment.appendChild(card);
     });
+
     eventActiveScheduleContainer.appendChild(activeFragment);
     eventPastScheduleContainer.appendChild(pastFragment);
+}
+
+/* =======================================================
+練習カード描画
+======================================================= */
+function createPracticeCard(pr) {
+
+    const card = document.createElement("div");
+    card.className = "event-practice"; 
+    card.dataset.practiceId = pr.practiceId;
+
+    card.innerHTML = `
+        <div class="practice-date">${pr.date}</div>
+        <div class="practice-title">${pr.title || "練習日"}</div>
+        <div class="responses-list">不参加:${pr.no}</div>
+    `;
+
+    return card;
 }
 
 /* =======================================================
@@ -229,23 +296,48 @@ function renderScheduleEvent(events) {
 function initEventDelegation() {
     document.body.addEventListener("click", async (event) => {
         const target = event.target;
+
         // リロード
         if (target.closest(".reload-btn")) {
             location.reload();
             return;
         }
 
-        // イベントカード全体タップ
+        // -----------------------------
+        // イベントカードのクリック
+        // -----------------------------
         const eventCard = target.closest("[data-event-id]");
-        if (eventCard && eventCard.closest("#home-schedule, #event-active-schedule, #event-past-schedule")) {
-            const eventId = Number(eventCard.dataset.eventId);
-            const eventData = eventMap[eventId];
-            const card = document.getElementById("eventDetailCard");
-            if (card) {
+        if (eventCard) {
+
+            // 対象コンテナ チェック
+            if (eventCard.closest("#home-schedule, #event-active-schedule, #event-past-schedule, #eventArea")) {
+
+                const eventId = Number(eventCard.dataset.eventId);
+                const eventData = eventMap[eventId];
+
+                const card = document.getElementById("eventDetailCard");
                 card.classList.add("active");
                 card.dataset.eventId = eventId;
+
                 await fillDetailCard(eventData, userId, card);
+                return;
             }
+        }
+
+        // -----------------------------
+        // 練習カードのクリック
+        // -----------------------------
+        const practiceCard = target.closest("[data-practice-id]");
+        if (practiceCard && !target.closest(".close-card-btn, .response-btn, .toggle-response-btn")) {
+
+            const practiceId = Number(practiceCard.dataset.practiceId);
+            const practiceData = practiceMap[practiceId];
+
+            const card = document.getElementById("practiceDetailCard");
+            card.classList.add("active");
+            card.dataset.practiceId = practiceId;
+
+            await fillPracticeDetailCard(practiceData, userId, card);
             return;
         }
 
@@ -265,9 +357,35 @@ function initEventDelegation() {
             return;
         }
 
-        // 回答
+                        // 回答
         const responseBtn = target.closest(".response-btn");
         if (responseBtn) {
+
+            // --- 練習カードの場合 ---
+            const practiceCard = responseBtn.closest(".practice-detail-card");
+            if (practiceCard) {
+                const practiceId = Number(practiceCard.dataset.practiceId);
+
+                // ▼▼▼ ここから追加：過去の練習は回答不可 ▼▼▼
+                const dateText = practiceCard.querySelector(".practice-detail-card-date")?.textContent || "";
+                const practiceDate = new Date(dateText.replace(/\//g, "-")).setHours(0,0,0,0);
+                const today = new Date().setHours(0,0,0,0);
+
+                if (practiceDate < today) {
+                    alert("過去の練習には回答できません。");
+                    return;
+                }
+                // ▲▲▲ ここまで追加 ▲▲▲
+
+                let answer = "";
+                if (responseBtn.classList.contains("absent")) answer = "休む";
+                if (responseBtn.classList.contains("late")) answer = "遅れる";
+
+                await updatePracticeResponse(practiceId, answer, practiceCard, userId);
+                return;
+            }
+
+            // --- イベントカードの場合（従来の処理） ---
             const card = responseBtn.closest(".event-detail-card");
             const dateText = card.querySelector(".event-detail-card-date")?.textContent || "";
             const eventDate = new Date(dateText.replace(/\//g, "-")).setHours(0,0,0,0);
@@ -276,6 +394,7 @@ function initEventDelegation() {
 
             const eventId = Number(card.dataset.eventId);
             const answer = responseBtn.classList.contains("yes") ? "参加" : "不参加";
+
             await updateResponse(eventId, answer, card, userId);
             return;
         }
@@ -285,10 +404,13 @@ function initEventDelegation() {
         if (closeTarget) {
             // data-targetで閉じる対象を取得
             const targetType = closeTarget.dataset.target; // "event", "member" など
-
             switch (targetType) {
                 case "event":
                     document.getElementById("eventDetailCard")?.classList.remove("active");
+                    break;
+                case "practice":
+                    console.log("a");
+                    document.getElementById("practiceDetailCard")?.classList.remove("active");
                     break;
                 case "member":
                     document.getElementById("membersCardUser")?.classList.remove("active");
@@ -473,7 +595,7 @@ function appendChildren(li, member) {
     details.classList.add("children-details");
 
     const summary = document.createElement("summary");
-    summary.textContent = `子供`;
+    summary.textContent = ``;
     details.appendChild(summary);
 
     const ul = document.createElement("ul");
@@ -700,6 +822,36 @@ async function updateResponse(eventId, answer, card, userId) {
     if (loadingOverlay) loadingOverlay.style.display = "none";
 }
 
+async function updatePracticeResponse(practiceId, answer, card, userId) {
+    if (loadingOverlay) loadingOverlay.style.display = "flex";
+    try {
+        const result = await callGasApi({
+            action: "updatePracticeResponse",
+            practiceId,
+            userId,
+            answer
+        });
+
+        // ボタン選択状態を反映
+        card.querySelector(".response-btn.absent")?.classList
+            .toggle("selected", answer === "休む");
+        card.querySelector(".response-btn.late")?.classList
+            .toggle("selected", answer === "遅れる");
+
+        // リストの書き換え（イベント版と同じ）
+        fillResponseList(card.querySelector("ul.response-list.absent"), result.absent);
+        fillResponseList(card.querySelector("ul.response-list.late"), result.late);
+
+        // 見出し（toggle ボタン）の人数更新
+        card.querySelector(".toggle-response-btn.absent").textContent = `欠席 ${result.absent.length}人`;
+        card.querySelector(".toggle-response-btn.late").textContent   = `遅れて参加 ${result.late.length}人`;
+
+    } catch (e) {
+        console.error(e);
+    }
+    if (loadingOverlay) loadingOverlay.style.display = "none";
+}
+
 async function fillDetailCard(eventData, userId, card) {
 
     if (loadingOverlay) loadingOverlay.style.display = "flex";
@@ -777,6 +929,47 @@ async function fillDetailCard(eventData, userId, card) {
 function fillResponseList(ulElement, names) {
     if (!ulElement) return;
     ulElement.innerHTML = (names || []).map(name => `<li><span class="name">${name}</span></li>`).join('');
+}
+
+async function fillPracticeDetailCard(practiceData, userId, card) {
+
+    // タイトル
+    card.querySelector(".practice-detail-card-title").textContent = practiceData.title || "練習日";
+
+    // 日付
+    card.querySelector(".practice-detail-card-date").textContent = practiceData.date;
+
+    // 時間
+    card.querySelector(".practice-detail-card-time-text").textContent =
+        (practiceData.start || "") + (practiceData.end ? " 〜 " + practiceData.end : "");
+
+    // 場所
+    card.querySelector(".practice-detail-card-location").textContent =
+        practiceData.location || "";
+
+    // コメント（自分のコメント）
+    card.querySelector(".practice-detail-card-comment").textContent =
+        practiceData.myComment || "";
+
+    // 休む人 / 遅れる人のリストをクリア
+    const absentList = card.querySelector(".response-list.absent");
+    const lateList   = card.querySelector(".response-list.late");
+
+    absentList.innerHTML = "";
+    lateList.innerHTML = "";
+
+    // メンバー一覧
+    (practiceData.absent || []).forEach(name => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        absentList.appendChild(li);
+    });
+
+    (practiceData.late || []).forEach(name => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        lateList.appendChild(li);
+    });
 }
 
 /* =======================================================
@@ -866,18 +1059,19 @@ function initChatBot() {
     }
 }
 
+
+/* =======================================================
+カレンダー描画
+======================================================= */
 function initCalendar() {
+
     const today = new Date();
-    generateCalendar(today.getFullYear(), today.getMonth());
+        generateCalendar(today.getFullYear(), today.getMonth());
 }
 
 function generateCalendar(year, month) {
-    function normalize(dateStr) {
-        return dateStr.replace(/-/g, "/").split(" ")[0];
-    }
-
     const cal = document.getElementById("calendarArea");
-    cal.innerHTML = "";
+    cal.innerHTML = ""; 
 
     const firstDay = new Date(year, month, 1);
     const lastDay  = new Date(year, month + 1, 0);
@@ -914,7 +1108,7 @@ function generateCalendar(year, month) {
         e => normalize(e.date) === normalize(fullDate)
     );
 
-    // 練習日（practiceMap）
+    // 練習日
     const practice = Object.values(practiceMap).find(
         p => normalize(p.date) === normalize(fullDate)
     );
@@ -939,12 +1133,18 @@ function generateCalendar(year, month) {
 
     cal.querySelector(".prev").addEventListener("click", () => {
         const prev = new Date(year, month - 1);
-        generateCalendar(prev.getFullYear(), prev.getMonth());
+        showCalendarSkeleton();  // ← 追加
+        setTimeout(() => {
+            generateCalendar(prev.getFullYear(), prev.getMonth());
+        }, 50);
     });
 
     cal.querySelector(".next").addEventListener("click", () => {
         const next = new Date(year, month + 1);
-        generateCalendar(next.getFullYear(), next.getMonth());
+        showCalendarSkeleton();  // ← 追加
+        setTimeout(() => {
+            generateCalendar(next.getFullYear(), next.getMonth());
+        }, 50);
     });
 
     cal.querySelectorAll(".day").forEach(day => {
@@ -953,4 +1153,46 @@ function generateCalendar(year, month) {
             loadEventByDate(date);
         });
     });
+}
+
+function loadEventByDate(dateStr) {
+    renderEventsOfDate(dateStr);
+}
+
+function renderEventsOfDate(dateStr) {
+    const eventArea = document.getElementById("eventArea");
+    eventArea.innerHTML = "";
+
+    const normalize = s => s.replace(/-/g, "/").split(" ")[0];
+
+    // イベント
+    const eventsToday = Object.values(eventMap).filter(
+        ev => normalize(ev.date) === normalize(dateStr)
+    );
+
+    // 練習
+    const practiceToday = Object.values(practiceMap).filter(
+        pr => normalize(pr.date) === normalize(dateStr)
+    );
+
+    if (eventsToday.length === 0 && practiceToday.length === 0) {
+        eventArea.innerHTML = `<div class="no-event">予定なし</div>`;
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    // イベントカード
+    eventsToday.forEach(ev => {
+        const card = createEventCard(ev, { includeDeadline: true });
+        fragment.appendChild(card);
+    });
+
+    // 練習日カード
+    practiceToday.forEach(pr => {
+        const card = createPracticeCard(pr);
+        fragment.appendChild(card);
+    });
+
+    eventArea.appendChild(fragment);
 }
