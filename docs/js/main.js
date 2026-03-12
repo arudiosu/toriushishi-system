@@ -103,7 +103,7 @@ function showSkeleton(containers) {
     containers.forEach(container => {
         if(!container) return;
         container.innerHTML = "";
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 1; i++) {
             const sk = document.createElement("div");
             sk.className = "skeleton skeleton-card";
             container.appendChild(sk);
