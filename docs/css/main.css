@@ -205,10 +205,15 @@ animation: shimmer 1.2s infinite;
 
 /* スケルトンカードのサイズ */
 .skeleton-card {
-height: 90px;
-margin: 12px auto;
-width: 85%;
-border-radius: 20px;
+    display: flex;
+    flex-direction: column;  /* ← これで縦並びに */
+    justify-content: center;
+    width: 85%;
+    min-height: 90px;
+    margin: 12px auto;
+    padding: 12px 16px 16px;
+    border-radius: 20px;
+    position: relative;
 }
 
 
