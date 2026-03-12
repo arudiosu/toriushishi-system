@@ -944,21 +944,10 @@ async function fillPracticeDetailCard(practiceData, userId, card) {
 
     // タイトル
     card.querySelector(".practice-detail-card-title").textContent = practiceData.title || "練習日";
-
-    // 日付
     card.querySelector(".practice-detail-card-date").textContent = practiceData.date;
-
-    // 時間
-    card.querySelector(".practice-detail-card-time-text").textContent =
-        (practiceData.start || "") + (practiceData.end ? " 〜 " + practiceData.end : "");
-
-    // 場所
-    card.querySelector(".practice-detail-card-location").textContent =
-        practiceData.location || "";
-
-    // コメント（自分のコメント）
-    card.querySelector(".practice-detail-card-comment").textContent =
-        practiceData.myComment || "";
+    card.querySelector(".practice-detail-card-time-text").textContent = (practiceData.start || "") + (practiceData.end ? " 〜 " + practiceData.end : "");
+    card.querySelector(".practice-detail-card-location").textContent =　practiceData.location || "";
+    card.querySelector(".practice-detail-card-comment").textContent = practiceData.myComment || "";
 
     // 休む人 / 遅れる人のリストをクリア
     const absentList = card.querySelector(".response-list.absent");
@@ -966,6 +955,8 @@ async function fillPracticeDetailCard(practiceData, userId, card) {
 
     absentList.innerHTML = "";
     lateList.innerHTML = "";
+    
+     card.querySelectorAll(".response-list").forEach(ul => ul.style.display = "none");
 
     // メンバー一覧
     (practiceData.absent || []).forEach(name => {
