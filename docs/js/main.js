@@ -196,7 +196,7 @@ async function getPractices() {
 
 function loadHomeEvents() {
     homeScheduleContainer.innerHTML = "";
-    renderScheduleHome(events);
+    renderScheduleHome(events, practices);
 }
 
 function loadEventEvents() {
@@ -232,18 +232,30 @@ function createEventCard(ev, options = {}) {
     return card;
 }
 
-function renderScheduleHome(events) {
+function renderScheduleHome(events, practices = []) {
     const today = new Date(); today.setHours(0,0,0,0);
 
-    const fragment = document.createDocumentFragment();
+    // イベントと練習を日付順に並べるため配列にまとめる
+    const items = [];
 
     events.forEach(ev => {
-        const eventDate = new Date(ev.date);
-        eventDate.setHours(0,0,0,0);
+        const d = new Date(ev.date); d.setHours(0,0,0,0);
+        if (d >= today) items.push({ type: "event", date: d, data: ev });
+    });
 
-        if (eventDate >= today) {
-            eventMap[ev.eventId] = ev;
-            fragment.appendChild(createEventCard(ev, { includeDeadline: true }));
+    practices.forEach(pr => {
+        const d = new Date(pr.date); d.setHours(0,0,0,0);
+        if (d >= today) items.push({ type: "practice", date: d, data: pr });
+    });
+
+    items.sort((a, b) => a.date - b.date);
+
+    const fragment = document.createDocumentFragment();
+    items.forEach(item => {
+        if (item.type === "event") {
+            fragment.appendChild(createEventCard(item.data, { includeDeadline: true }));
+        } else {
+            fragment.appendChild(createPracticeCard(item.data));
         }
     });
 
@@ -412,7 +424,6 @@ function initEventDelegation() {
                     document.getElementById("eventDetailCard")?.classList.remove("active");
                     break;
                 case "practice":
-                    console.log("a");
                     document.getElementById("practiceDetailCard")?.classList.remove("active");
                     break;
                 case "member":
@@ -598,7 +609,7 @@ function appendChildren(li, member) {
     details.classList.add("children-details");
 
     const summary = document.createElement("summary");
-    summary.textContent = ``;
+    summary.textContent = `子供 (${member.children.length}人)`;
     details.appendChild(summary);
 
     const ul = document.createElement("ul");
@@ -669,8 +680,8 @@ function initEventCreateCard() {
     document.getElementById("eventComment").value = "";
 
     // 演目リストを空に
-    const performanceList = document.querySelector(".performance-list");
-    performanceList.innerHTML = "";
+    const performanceList = document.getElementById("performanceList");
+    if (performanceList) performanceList.innerHTML = "";
 
     // 折りたたみリストを空に
     document.querySelectorAll(".response-list").forEach(ul => ul.innerHTML = "");
@@ -707,6 +718,34 @@ function openEditForm(eventData) {
     document.getElementById("eventTime").value = eventData.time || "";
     document.getElementById("eventLocation").value = eventData.location || "";
     document.getElementById("eventComment").value = eventData.comment || "";
+
+    // 既存演目を読み込む
+    const performanceList = document.getElementById("performanceList");
+    if (performanceList && Array.isArray(eventData.performances)) {
+        eventData.performances.forEach(perf => {
+            const wrapper = document.createElement("div");
+            wrapper.classList.add("performance-item");
+
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.placeholder = "演目名";
+            nameInput.classList.add("performance-name");
+            nameInput.value = perf.name || "";
+            wrapper.appendChild(nameInput);
+
+            ["太鼓", "小太鼓", "獅子舞"].forEach(roleName => {
+                const roleInput = document.createElement("input");
+                roleInput.type = "text";
+                roleInput.placeholder = roleName;
+                roleInput.classList.add("performance-role");
+                roleInput.dataset.role = roleName;
+                roleInput.value = perf.roles?.[roleName] || "";
+                wrapper.appendChild(roleInput);
+            });
+
+            performanceList.appendChild(wrapper);
+        });
+    }
 
     // 編集カードを表示
     editCard.classList.add("active");
@@ -767,6 +806,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const createCard = document.querySelector(".event-create-card");
         const eventId = createCard.dataset.eventId ? Number(createCard.dataset.eventId) : null;
 
+        // 演目データを収集
+        const performances = [];
+        document.querySelectorAll("#performanceList .performance-item").forEach(item => {
+            const name = item.querySelector(".performance-name")?.value.trim();
+            if (!name) return;
+            const roles = {};
+            item.querySelectorAll(".performance-role").forEach(input => {
+                if (input.value.trim()) roles[input.dataset.role] = input.value.trim();
+            });
+            performances.push({ name, roles });
+        });
+
         // ★ eventId を含めて GAS に送る
         const eventData = {
             eventId,   // ← 編集ならIDあり / 新規なら null
@@ -775,7 +826,8 @@ document.addEventListener("DOMContentLoaded", () => {
             date,
             time,
             location,
-            comment
+            comment,
+            performances
         };
 
         try {
@@ -955,8 +1007,8 @@ async function fillPracticeDetailCard(practiceData, userId, card) {
 
     absentList.innerHTML = "";
     lateList.innerHTML = "";
-    
-     card.querySelectorAll(".response-list").forEach(ul => ul.style.display = "none");
+
+    card.querySelectorAll(".response-list").forEach(ul => ul.style.display = "none");
 
     // メンバー一覧
     (practiceData.absent || []).forEach(name => {
@@ -970,6 +1022,17 @@ async function fillPracticeDetailCard(practiceData, userId, card) {
         li.textContent = name;
         lateList.appendChild(li);
     });
+
+    // トグルボタンに人数を反映
+    const absentToggle = card.querySelector(".toggle-response-btn.absent");
+    const lateToggle   = card.querySelector(".toggle-response-btn.late");
+    if (absentToggle) absentToggle.textContent = `欠席 ${(practiceData.absent || []).length}人`;
+    if (lateToggle)   lateToggle.textContent   = `遅れて参加 ${(practiceData.late || []).length}人`;
+
+    // 自分の回答状態をボタンに反映
+    const myStatus = practiceData.myStatus || "";
+    card.querySelector(".response-btn.absent")?.classList.toggle("selected", myStatus === "欠席");
+    card.querySelector(".response-btn.late")?.classList.toggle("selected", myStatus === "遅刻");
 }
 
 /* =======================================================
