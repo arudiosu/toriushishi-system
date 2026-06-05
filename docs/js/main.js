@@ -435,6 +435,9 @@ function initEventDelegation() {
                 case "create":
                     document.getElementById("eventCreateCard")?.classList.remove("active");
                     break;
+                case "practice-create":
+                    document.getElementById("practiceCreateCard")?.classList.remove("active");
+                    break;
                 default:
                     // data-target が無い場合や想定外
                     break;
@@ -479,13 +482,23 @@ document.querySelectorAll(".tab-item").forEach(tab => {
             return;
         }
 
-        // 新規作成カード
+        // イベント新規作成カード
         if (targetTab === "event-management") {
             if (userRole === "user") {
                 alert("管理者のみアクセスできます。");
                 return;
             }
             openCreateForm();
+            return;
+        }
+
+        // 練習日管理カード
+        if (targetTab === "practice-management") {
+            if (userRole === "user") {
+                alert("管理者のみアクセスできます。");
+                return;
+            }
+            openPracticeCreateForm();
             return;
         }
     });
@@ -854,6 +867,66 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
+/* =======================================================
+練習日新規作成
+======================================================= */
+function initPracticeCreateCard() {
+    document.getElementById("practiceTitle").value = "";
+    document.getElementById("practiceDate").value = "";
+    document.getElementById("practiceStart").value = "";
+    document.getElementById("practiceEnd").value = "";
+    document.getElementById("practiceLocation").value = "";
+    document.getElementById("practiceComment").value = "";
+}
+
+function openPracticeCreateForm() {
+    initPracticeCreateCard();
+    document.getElementById("practiceCreateCard").classList.add("active");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const savePracticeBtn = document.querySelector(".save-practice-btn");
+    if (!savePracticeBtn) return;
+
+    savePracticeBtn.addEventListener("click", async () => {
+        if (!confirm("練習日を保存しますか？")) return;
+
+        const title    = document.getElementById("practiceTitle").value.trim();
+        const date     = document.getElementById("practiceDate").value;
+        const start    = document.getElementById("practiceStart").value;
+        const end      = document.getElementById("practiceEnd").value;
+        const location = document.getElementById("practiceLocation").value.trim();
+        const comment  = document.getElementById("practiceComment").value.trim();
+
+        if (!date)  return alert("日付を選択してください");
+        if (!start) return alert("開始時間を選択してください");
+
+        const practiceData = { title: title || "練習日", date, start, end, location, comment };
+
+        try {
+            loadingOverlay.style.display = "flex";
+
+            const res = await callGasApi({ action: "savePractice", practice: practiceData });
+
+            if (!res.success) throw new Error(res.message || "練習日保存失敗");
+
+            alert("保存しました");
+            document.getElementById("practiceCreateCard").classList.remove("active");
+
+            // 練習データを再取得して画面を更新
+            await getPractices();
+            loadHomeEvents();
+            initCalendar();
+
+        } catch (err) {
+            console.error(err);
+            alert("保存中にエラーが発生しました");
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    });
+});
 
 /* =======================================================
 API 連携ロジック (回答更新 & 詳細表示)

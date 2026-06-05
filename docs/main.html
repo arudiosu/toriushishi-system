@@ -142,6 +142,7 @@
                 <ul class="tab-list">
                     <li class="tab-item" data-target="member-management">メンバー管理</li>
                     <li class="tab-item" data-target="event-management">イベント管理</li>
+                    <li class="tab-item" data-target="practice-management">練習日管理</li>
                 </ul>
             </section>
         </div>
@@ -295,6 +296,44 @@
         <button class="save-event-btn">保存</button>
     </div>
 
+
+    <!-- 練習日新規作成 -->
+    <div class="event-create-card" id="practiceCreateCard">
+
+        <!-- 戻るボタン -->
+        <button class="close-card-btn" data-target="practice-create">戻る</button>
+
+        <!-- タイトル入力 -->
+        <div class="event-create-card-title">
+            <label for="practiceTitle">タイトル</label>
+            <input type="text" id="practiceTitle" placeholder="例：通常練習" />
+        </div>
+
+        <!-- 日付入力 -->
+        <div class="event-create-card-time">
+            <label for="practiceDate">日付</label>
+            <input type="date" id="practiceDate" />
+            <label for="practiceStart">開始時間</label>
+            <input type="time" id="practiceStart" />
+            <label for="practiceEnd">終了時間</label>
+            <input type="time" id="practiceEnd" />
+        </div>
+
+        <!-- 場所入力 -->
+        <div class="event-create-card-location">
+            <label for="practiceLocation">場所</label>
+            <input type="text" id="practiceLocation" placeholder="場所を入力" />
+        </div>
+
+        <!-- コメント入力 -->
+        <div class="event-create-card-comment">
+            <label for="practiceComment">連絡事項</label>
+            <textarea id="practiceComment" placeholder="連絡事項を入力"></textarea>
+        </div>
+
+        <!-- 保存ボタン -->
+        <button class="save-practice-btn">保存</button>
+    </div>
 
     <!-- ==============================
         メンバーカード
