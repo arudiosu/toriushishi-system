@@ -1,5 +1,5 @@
 
-// ★ ここにあなたのデプロイURLを入れる
+// ★ テスト環境用GAS URL
 window.GAS_URL = "https://script.google.com/macros/s/AKfycbyzeUMTM_AK_8v00OUNz_BivDg-tL8GBhQclvMkUjLO5v60Xy4MlfyNjBev1xMT4gEj/exec";
 
 /* =======================================================
@@ -100,5 +100,3 @@ async function checkAdminAccess() {
         return false;
     }
 }
-
-

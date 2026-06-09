@@ -1,0 +1,548 @@
+/* =======================================================
+  お旅管理
+======================================================= */
+
+.otabi-card {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+  overflow: hidden;
+}
+
+.otabi-card-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  padding: 12px 20px 4px;
+  flex-shrink: 0;
+}
+
+.otabi-tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.otabi-tab-btn {
+  flex: 1;
+  padding: 11px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.otabi-tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.otabi-tab-pane {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+.otabi-tab-pane.active {
+  display: block;
+}
+
+.otabi-list-area {
+  padding: 8px 16px;
+}
+
+/* --- アイテム --- */
+.otabi-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  margin: 6px 0;
+  transition: background var(--transition);
+}
+.otabi-entry-item { cursor: pointer; }
+.otabi-entry-item:active { background: var(--surface-3); }
+
+.otabi-badge {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  font-weight: 800;
+}
+.otabi-badge-ue    { background: rgba(230,57,70,.2);   color: var(--accent); }
+.otabi-badge-shita { background: rgba(58,134,255,.2);  color: var(--accent-blue); }
+.otabi-badge-joint { background: rgba(6,214,160,.2);   color: var(--accent-teal); }
+
+.otabi-item-body  { flex: 1; min-width: 0; }
+.otabi-item-title { font-size: .93rem; font-weight: 600; }
+.otabi-item-sub   { font-size: .76rem; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.otabi-map-link {
+  color: var(--accent-teal);
+  text-decoration: none;
+}
+.otabi-map-link:active { text-decoration: underline; }
+
+.otabi-map-icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-teal);
+  font-size: 1rem;
+  text-decoration: none;
+  border-radius: 50%;
+  transition: background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.otabi-map-icon:active { background: rgba(6,214,160,.15); }
+
+.otabi-action-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- スケジュールエントリ --- */
+.otabi-entry-no   { flex-shrink: 0; width: 24px; text-align: center; font-size: .78rem; font-weight: 700; color: var(--text-3); }
+.otabi-entry-time { flex-shrink: 0; width: 44px; font-size: .82rem; font-weight: 700; color: var(--accent-teal); }
+.otabi-donation-badge {
+  flex-shrink: 0;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(230,57,70,.12);
+  padding: 3px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+/* --- コントロール --- */
+.otabi-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 6px;
+  gap: 10px;
+}
+
+.otabi-year-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .95rem;
+  font-weight: 700;
+}
+
+.otabi-year-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: 1.15rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.otabi-year-btn:active { opacity: .7; }
+
+.otabi-group-toggle { display: flex; gap: 6px; }
+
+.otabi-group-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.otabi-group-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* 曜日・フィルタボタン（group-btnと同スタイル） */
+.otabi-day-btn,
+.otabi-place-filter-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.otabi-day-btn.active { background: var(--accent-teal, #0d9488); border-color: var(--accent-teal, #0d9488); color: #fff; }
+.otabi-place-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.otabi-action-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 10px;
+}
+
+.otabi-action-chip {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.otabi-action-chip:active { background: var(--surface-3); }
+
+.otabi-add-btn {
+  display: block;
+  margin: 4px 16px 8px;
+  padding: 12px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-2);
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: calc(100% - 32px);
+  text-align: center;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.otabi-add-btn:active { border-color: var(--accent); color: var(--accent); }
+
+/* --- お花代集計 --- */
+.otabi-don-card {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.otabi-don-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .95rem;
+}
+
+.otabi-don-row.total {
+  font-weight: 800;
+  font-size: 1.1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 4px;
+  color: var(--accent);
+}
+
+/* --- お花代 Excel風入力 --- */
+.otabi-don-total-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.otabi-don-total-bar span {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.otabi-don-grid {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.otabi-don-grid-head,
+.otabi-don-grid-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 110px;
+  align-items: center;
+}
+.otabi-don-grid-head {
+  background: var(--surface-3);
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--text-3);
+  letter-spacing: .04em;
+}
+.otabi-don-grid-head > span { padding: 8px 10px; }
+.otabi-don-grid-row {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.otabi-don-grid-row:nth-child(even) { background: var(--surface-2); }
+.dg-no {
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-2);
+  font-size: .85rem;
+}
+.dg-name {
+  padding: 8px 10px;
+  font-size: .9rem;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dg-amount { padding: 4px 6px; }
+.dg-input {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-1);
+}
+.dg-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+.otabi-don-group-btn,
+.otabi-don-day-btn {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  padding: 6px 14px;
+  font-size: .85rem;
+  cursor: pointer;
+}
+.otabi-don-group-btn:first-child,
+.otabi-don-day-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.otabi-don-group-btn:last-child,
+.otabi-don-day-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.otabi-don-group-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.otabi-don-day-btn.active {
+  background: var(--accent-teal, #0d9488);
+  color: #fff;
+  border-color: var(--accent-teal, #0d9488);
+}
+
+/* --- フォームカード --- */
+.otabi-form-card {
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+
+.otabi-form-card-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  padding: 12px 20px 4px;
+}
+
+.otabi-form-body {
+  padding: 8px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.otabi-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.otabi-form-field label {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.otabi-form-field input[type="text"],
+.otabi-form-field input[type="tel"],
+.otabi-form-field input[type="number"],
+.otabi-form-field input[type="time"],
+.otabi-form-field select {
+  padding: 11px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: .95rem;
+  -webkit-appearance: none;
+  transition: border-color var(--transition);
+}
+
+.otabi-form-field input:focus,
+.otabi-form-field select:focus { outline: none; border-color: var(--accent); }
+
+.otabi-form-field select {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%23a0a0a0' d='M4 6l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+}
+
+.otabi-form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.otabi-form-field.half { flex: 1; }
+
+.otabi-radio-group { display: flex; gap: 14px; flex-wrap: wrap; }
+
+.otabi-radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .9rem;
+  font-weight: 600;
+  text-transform: none;
+  color: var(--text-1);
+  cursor: pointer;
+  letter-spacing: 0;
+}
+
+.otabi-delete-btn {
+  display: block;
+  margin: 4px 16px;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid #d9373e;
+  border-radius: var(--radius-md);
+  color: #d9373e;
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: calc(100% - 32px);
+  text-align: center;
+}
+
+/* --- 一括入力フォーム --- */
+#otabiBulkRows {
+  padding: 8px 16px 0;
+}
+
+.otabi-bulk-row {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.otabi-bulk-top {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.otabi-bulk-top .bulk-no {
+  width: 64px;
+}
+
+.otabi-bulk-top .bulk-time {
+  flex: 1;
+}
+
+.otabi-bulk-remove {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  border: none;
+  color: var(--text-3);
+  font-size: .85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.otabi-bulk-remove:active { background: rgba(217,55,62,.2); color: #d9373e; }
+
+.otabi-bulk-bottom {
+  display: flex;
+  gap: 8px;
+}
+
+.otabi-bulk-bottom .bulk-memo {
+  flex: 1;
+}
+
+.otabi-bulk-bottom .bulk-donation {
+  width: 100px;
+}
+
+.otabi-bulk-row input,
+.otabi-bulk-row select {
+  padding: 9px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: .9rem;
+  -webkit-appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.otabi-bulk-row input:focus,
+.otabi-bulk-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.otabi-bulk-row select {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%23a0a0a0' d='M4 6l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 30px;
+}
