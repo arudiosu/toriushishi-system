@@ -514,6 +514,7 @@ function initEventCreateCard() {
     document.getElementById("eventTimeUndecided").checked = false;
     document.getElementById("eventTime").disabled = false;
     document.getElementById("eventLocation").value = "";
+    document.getElementById("eventDeadline").value = "";
     document.getElementById("eventComment").value = "";
     document.getElementById("performanceList").innerHTML = "";
     const overlay = document.querySelector(".event-create-card .loading-overlay");
@@ -536,6 +537,7 @@ function openEditForm(eventData) {
     document.getElementById("eventTime").value = (timeVal && timeVal !== "未定") ? timeVal : "";
     document.getElementById("eventTime").disabled = timeVal === "未定";
     document.getElementById("eventLocation").value = eventData.location || "";
+    document.getElementById("eventDeadline").value = (eventData.deadline || "").split("T")[0].replace(/\//g, "-");
     document.getElementById("eventComment").value = eventData.comment || "";
     const performanceList = document.getElementById("performanceList");
     if (Array.isArray(eventData.performances)) {
@@ -565,6 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const timeUndecided = document.getElementById("eventTimeUndecided").checked;
         const time = timeUndecided ? "未定" : document.getElementById("eventTime").value;
         const location = document.getElementById("eventLocation").value.trim();
+        const deadline = document.getElementById("eventDeadline").value;
         const comment = document.getElementById("eventComment").value;
         if (!title) return alert("タイトルを入力してください");
         if (!date) return alert("日付を選択してください");
@@ -574,7 +577,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const performances = collectPerformances();
         try {
             loadingOverlay.style.display = "flex";
-            const res = await callGasApi({ action: "saveEvent", event: { eventId, type, title, date, time, location, comment, performances } });
+            const res = await callGasApi({ action: "saveEvent", event: { eventId, type, title, date, time, location, deadline, comment, performances } });
             if (!res.success) throw new Error(res.message || "イベント保存失敗");
             alert("保存しました");
             document.getElementById("eventCreateCard").classList.remove("active");

@@ -113,8 +113,8 @@ function doPost(e) {
             `${typeLabel} 新しいイベントが登録されました`,
             ``,
             `📌 ${ev.title}`,
-            `📅 ${dateStr} ${ev.time || ""}`,
-            ev.deadline ? `\n回答期限：${ev.deadline}` : "",
+            `📅 ${dateStr}${ev.time && ev.time !== "未定" ? " " + ev.time : ev.time === "未定" ? " （時間未定）" : ""}`,
+            ev.deadline ? `回答期限：${ev.deadline}` : "",
             ``,
             `アプリから参加・不参加を回答してください。`,
             `https://arudiosu.github.io/toriushishi-system/`

@@ -729,8 +729,14 @@ function saveEventGAS(event) {
 
     const dateOnly = new Date(event.date);
 
-    const [h, m] = event.time.split(":").map(Number);
-    const timeOnly = new Date(1899, 11, 30, h, m);
+    const timeStr = event.time || "";
+    let timeOnly;
+    if (timeStr && timeStr !== "未定" && timeStr.includes(":")) {
+      const [h, m] = timeStr.split(":").map(Number);
+      timeOnly = new Date(1899, 11, 30, h, m);
+    } else {
+      timeOnly = timeStr; // "未定" or "" をそのまま文字列で保存
+    }
 
     if (event.eventId) {
       const id = Number(event.eventId);
@@ -773,6 +779,7 @@ function saveEventGAS(event) {
       timeOnly,
       event.location,
       event.comment,
+      event.deadline || "",
       now,
       now
     ]);
