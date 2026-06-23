@@ -114,7 +114,6 @@ function doPost(e) {
             ``,
             `📌 ${ev.title}`,
             `📅 ${dateStr} ${ev.time || ""}`,
-            `📍 ${ev.location || "未設定"}`,
             ev.deadline ? `\n回答期限：${ev.deadline}` : "",
             ``,
             `アプリから参加・不参加を回答してください。`,
