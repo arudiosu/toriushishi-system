@@ -394,13 +394,17 @@ function printOtabiSchedule() {
   <tbody>${rows}</tbody>
 </table>
 ${totalDon ? `<p class="total">合計：￥${totalDon.toLocaleString()}</p>` : ""}
-<script>window.onload = () => { window.print(); }<\/script>
 </body></html>`;
 
-    const win = window.open("", "_blank");
-    if (!win) return alert("ポップアップをブロックしています。許可してください。");
-    win.document.write(html);
-    win.document.close();
+    let iframe = document.getElementById("_printFrame");
+    if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "_printFrame";
+        iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;";
+        document.body.appendChild(iframe);
+    }
+    iframe.srcdoc = html;
+    iframe.onload = () => iframe.contentWindow.print();
 }
 
 // ===== お花代（Excel風一括入力） =====
