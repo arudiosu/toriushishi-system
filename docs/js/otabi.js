@@ -217,10 +217,10 @@ function renderOtabiSchedule() {
             </div>
             <div class="otabi-item-body">
                 <div class="otabi-item-title">${e.place_name || '未設定'}</div>
+                ${e.is_joint ? '<span class="otabi-joint-badge-row">合同</span>' : ''}
                 ${e.memo ? `<div class="otabi-item-sub">${e.memo}</div>` : ''}
             </div>
             ${mapBtn}
-            ${e.donation ? `<div class="otabi-donation-badge">￥${Number(e.donation).toLocaleString()}</div>` : ''}
             ${completeBtn}
         </div>`;
     }).join('');
@@ -311,10 +311,11 @@ function renderProgressOverlay(groups) {
         const diff = timeDiff(e.time, e.actual_time);
         const diffClass = diff.startsWith("+") ? "otabi-diff-late" : diff.startsWith("-") ? "otabi-diff-early" : "otabi-diff-zero";
         const jointBadge = e.is_joint ? '<span class="prog-joint-badge">合同</span>' : '';
+        const donationHtml = e.donation ? `<span class="prog-donation">￥${Number(e.donation).toLocaleString()}</span>` : '';
         return `<div class="prog-row${isDone ? ' prog-done' : ''}${e.is_joint ? ' prog-joint' : ''}">
             <span class="prog-no">${e.no}</span>
             <span class="prog-time">${e.time || '--:--'}</span>
-            <span class="prog-name">${e.place_name}${jointBadge}</span>
+            <span class="prog-name">${e.place_name}${donationHtml}${jointBadge ? `<br>${jointBadge}` : ''}</span>
             <span class="prog-actual">${e.actual_time || ''}</span>
             ${diff ? `<span class="otabi-diff ${diffClass}">${diff}</span>` : '<span></span>'}
         </div>`;
