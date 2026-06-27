@@ -823,67 +823,98 @@ async function openDonationBoard() {
 <title>${yearLabel} 春例大祭 御花御礼</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; background: #fff; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #fff;
+    color: #000;
+  }
   body {
+    font-family: '游明朝', 'YuMincho', 'Hiragino Mincho ProN', 'MS Mincho', serif;
+    display: flex;
+    flex-direction: row-reverse; /* 右から: タイトル → 名前 → フッター */
+    align-items: stretch;
+    padding: 20px 24px;
+    height: 100vh;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  /* ===== 右端：タイトル ===== */
+  .board-title {
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    font-family: '游明朝', 'YuMincho', 'Hiragino Mincho ProN', serif;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    padding: 24px 20px;
-    min-height: 100vh;
-    gap: 0;
-  }
-  .board-title {
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: .2em;
-    padding-right: 16px;
-    border-right: 2px solid #000;
-    margin-right: 20px;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  .board-title .year { font-size: 1.1rem; display: block; margin-bottom: .4em; }
-  .board-names {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0 4px;
-    flex: 1;
-    max-height: calc(100vh - 48px);
-  }
-  .board-name {
-    font-size: 1rem;
-    letter-spacing: .12em;
-    line-height: 1.8;
-    padding: 0 6px;
-    white-space: nowrap;
-  }
-  .board-footer {
-    font-size: .8rem;
-    letter-spacing: .1em;
-    border-left: 2px solid #000;
-    padding-left: 16px;
-    margin-left: 20px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+    padding-left: 16px;
+    border-left: 2px solid #000;
+    margin-left: 16px;
+    letter-spacing: .25em;
+    white-space: nowrap;
+    gap: .6em;
   }
-  .board-footer .message { font-size: .75rem; line-height: 2; }
-  .board-footer .org { font-size: 1rem; font-weight: 700; margin-top: 1em; }
+  .board-title .title-year { font-size: 1.1rem; font-weight: 700; }
+  .board-title .title-main { font-size: 1.5rem; font-weight: 900; }
+
+  /* ===== 中央：名前グリッド ===== */
+  .board-names {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    flex: 1;
+    display: flex;
+    flex-direction: column;   /* 縦に積む */
+    flex-wrap: wrap;          /* 溢れたら左の列へ */
+    align-content: flex-start;/* 右列から埋める */
+    height: 100%;
+    overflow: hidden;
+    gap: 0 2px;
+  }
+  .board-name {
+    font-size: .95rem;
+    letter-spacing: .08em;
+    line-height: 1.75;
+    padding: 0 5px;
+    white-space: nowrap;
+  }
+
+  /* ===== 左端：感謝文 ===== */
+  .board-footer {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-right: 16px;
+    border-right: 2px solid #000;
+    margin-right: 16px;
+    gap: 1.2em;
+  }
+  .board-footer .message {
+    font-size: .78rem;
+    line-height: 2.2;
+    letter-spacing: .1em;
+  }
+  .board-footer .org {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .2em;
+  }
+
+  /* ===== 印刷 ===== */
   @media print {
-    body { padding: 10mm; }
-    @page { size: A3 landscape; margin: 10mm; }
+    body { padding: 8mm 10mm; height: 100%; }
+    @page { size: A3 landscape; margin: 0; }
+    .print-btn { display: none; }
   }
+
   .print-btn {
     position: fixed;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 8px 20px;
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 22px;
     background: #c8a84b;
     color: #fff;
     border: none;
@@ -893,21 +924,27 @@ async function openDonationBoard() {
     cursor: pointer;
     z-index: 999;
     writing-mode: horizontal-tb;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
   }
-  @media print { .print-btn { display: none; } }
 </style>
 </head>
 <body>
 <button class="print-btn" onclick="window.print()">印刷</button>
+
+<!-- 右端：タイトル -->
 <div class="board-title">
-  <span class="year">${yearLabel}</span>
-  春例大祭　御花御礼
+  <span class="title-year">${yearLabel}</span>
+  <span class="title-main">春例大祭　御花御礼</span>
 </div>
+
+<!-- 中央：名前一覧（縦書き・右→左へ列が流れる） -->
 <div class="board-names">
   ${names.map(n => `<div class="board-name">${n}</div>`).join('')}
 </div>
+
+<!-- 左端：感謝文 -->
 <div class="board-footer">
-  <div class="message">昨年も御花、諸々のご理解ご協力に<br>心より感謝申し上げます<br>本年も変わらず宜しくお願い申し上げます</div>
+  <div class="message">昨年も御花、諸々のご理解ご協力に心より感謝申し上げます&#13;&#10;本年も変わらず宜しくお願い申し上げます</div>
   <div class="org">鳥生獅子連中</div>
 </div>
 </body>
