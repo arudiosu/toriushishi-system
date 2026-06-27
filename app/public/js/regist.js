@@ -33,8 +33,10 @@ addChildBtn.addEventListener("click", () => {
     div.classList.add("child-row");
 
     div.innerHTML = `
-        <input type="text" class="child-lastname" readonly placeholder="性" value="${lastname}">
-        <input type="text" class="child-firstname" placeholder="名">
+        <div class="child-name-row">
+            <input type="text" class="child-lastname" placeholder="姓" value="${lastname}">
+            <input type="text" class="child-firstname" placeholder="名">
+        </div>
         <input type="date" class="child-birth">
     `;
 

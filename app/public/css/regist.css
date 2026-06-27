@@ -106,16 +106,22 @@ input::placeholder { color: #555; }
 
 .child-row {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
-.child-lastname  { width: 90px; }
+.child-name-row {
+  display: flex;
+  gap: 8px;
+}
+
+.child-lastname  { flex: 1; }
 .child-firstname { flex: 1; }
 
 .child-birth {
-  width: 9rem;
-  padding: 11px 10px;
+  width: 100%;
+  padding: 11px 14px;
   border-radius: 10px;
   border: 1px solid #333;
   background: #111;
@@ -162,6 +168,8 @@ input::placeholder { color: #555; }
   height: 18px;
   accent-color: #e63946;
   flex-shrink: 0;
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
 }
 
 /* Buttons */
