@@ -120,8 +120,25 @@ async function deletePlaceForm() {
 const otabiSchedCache = {};
 let otabiSchedCachedYear = null;
 
+function renderOtabiYearChips() {
+    const container = document.getElementById("otabiSchedYearChips");
+    if (!container) return;
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear - 1, currentYear, currentYear + 1];
+    container.innerHTML = years.map(y =>
+        `<button class="otabi-year-chip${y === otabiYear ? " active" : ""}" data-year="${y}">${y}年</button>`
+    ).join("");
+    container.querySelectorAll(".otabi-year-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+            otabiYear = Number(btn.dataset.year);
+            renderOtabiYearChips();
+            loadOtabiSchedule();
+        });
+    });
+}
+
 async function loadOtabiSchedule(forceReload = false) {
-    document.getElementById("otabiScheduleYear").textContent = otabiYear;
+    renderOtabiYearChips();
     document.querySelectorAll(".otabi-group-btn").forEach(b => b.classList.toggle("active", b.dataset.group === otabiGroup));
     document.querySelectorAll(".otabi-day-btn").forEach(b => b.classList.toggle("active", b.dataset.day === otabiDay));
 
@@ -714,8 +731,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".otabi-day-btn").forEach(btn =>
         btn.addEventListener("click", () => { otabiDay = btn.dataset.day; loadOtabiSchedule(); })
     );
-    document.getElementById("otabiSchedYearPrev")?.addEventListener("click", () => { otabiYear--; loadOtabiSchedule(); });
-    document.getElementById("otabiSchedYearNext")?.addEventListener("click", () => { otabiYear++; loadOtabiSchedule(); });
+    renderOtabiYearChips();
     // お花代
     document.getElementById("otabiDonYearPrev")?.addEventListener("click",  () => { otabiYear--; loadOtabiDonations(); });
     document.getElementById("otabiDonYearNext")?.addEventListener("click",  () => { otabiYear++; loadOtabiDonations(); });

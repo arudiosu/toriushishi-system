@@ -315,6 +315,16 @@
                     <li class="tab-item" data-target="gear-management">衣装管理</li>
                 </ul>
             </section>
+            <section class="section">
+                <p class="section-title">表示設定</p>
+                <div class="display-setting-row">
+                    <span class="display-setting-label">春例大祭ウィジェット</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="haruWidgetToggleSwitch" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </section>
         </div>
 
         <div class="app-version">
@@ -520,11 +530,7 @@
         </div>
         <div class="otabi-tab-pane" data-tab="schedule">
             <div class="otabi-controls">
-                <div class="otabi-year-nav">
-                    <button class="otabi-year-btn" id="otabiSchedYearPrev">‹</button>
-                    <span id="otabiScheduleYear">2025</span>年
-                    <button class="otabi-year-btn" id="otabiSchedYearNext">›</button>
-                </div>
+                <div id="otabiSchedYearChips" class="otabi-year-chips"></div>
             </div>
             <div class="otabi-controls">
                 <div class="otabi-group-toggle">

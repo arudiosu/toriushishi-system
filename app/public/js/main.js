@@ -875,7 +875,25 @@ let haruDay = "土曜";
 let haruGroup = "上組";
 let haruAllGroups = {};
 
+function initHaruWidgetVisibility() {
+    const widget = document.getElementById("haruWidget");
+    const sw = document.getElementById("haruWidgetToggleSwitch");
+    if (!widget || !sw) return;
+
+    const saved = localStorage.getItem("haruWidgetVisible");
+    const visible = saved === null ? true : saved === "true";
+    sw.checked = visible;
+    widget.style.display = visible ? "" : "none";
+
+    sw.addEventListener("change", () => {
+        const v = sw.checked;
+        widget.style.display = v ? "" : "none";
+        localStorage.setItem("haruWidgetVisible", v);
+    });
+}
+
 function initHaruWidget() {
+    initHaruWidgetVisibility();
     // トグル（開閉）
     const toggleBtn = document.getElementById("haruWidgetToggle");
     const body = document.getElementById("haruWidgetBody");

@@ -842,3 +842,28 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* 年チップ */
+.otabi-year-chips {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+  flex-wrap: wrap;
+}
+.otabi-year-chip {
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, color .15s;
+}
+.otabi-year-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
