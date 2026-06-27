@@ -572,14 +572,12 @@ async function saveBulkEntries() {
 
 async function copyOtabiSchedule() {
     if (otabiScheduleEntries.length > 0) {
-        alert("すでにスケジュールが登録されています。
-前年コピーはデータが空の場合のみ使用できます。");
+        alert("すでにスケジュールが登録されています。\n前年コピーはデータが空の場合のみ使用できます。");
         return;
     }
     const fromYear = otabiYear - 1;
     const groupLabel = otabiGroup;
-    if (!confirm(`${fromYear}年の${groupLabel}スケジュールを${otabiYear}年にコピーしますか？
-(お花代はリセットされます)`)) return;
+    if (!confirm(`${fromYear}年の${groupLabel}スケジュールを${otabiYear}年にコピーしますか？\n(お花代はリセットされます)`)) return;
     loadingOverlay.style.display = "flex";
     try {
         const res = await callGasApi({ action: "copyOtabiSchedule", fromYear, toYear: otabiYear, group: otabiGroup });
