@@ -96,7 +96,7 @@ li { list-style: none; }
 .tab-content {
   display: none;
   position: fixed;
-  top: var(--title-h);
+  top: 0;
   bottom: var(--nav-h);
   left: 0;
   right: 0;
@@ -114,10 +114,8 @@ li { list-style: none; }
   Nav Title Bar
 ======================================================= */
 .nav-title {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   height: var(--title-h);
   display: flex;
   align-items: center;
@@ -125,6 +123,7 @@ li { list-style: none; }
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   z-index: 100;
+  flex-shrink: 0;
 }
 
 .nav-title h1 {
