@@ -1447,6 +1447,25 @@ input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(.7); opac
 .pw-reset-btn:active { opacity: .8; }
 
 /* パスワード変更（設定画面） */
+.pw-change-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+  text-align: left;
+}
+.pw-change-chevron {
+  transition: transform .2s;
+  font-size: 13px;
+  color: var(--text-3, #999);
+}
+.pw-change-toggle.open .pw-change-chevron {
+  transform: rotate(180deg);
+}
 .pw-change-form {
   display: flex;
   flex-direction: column;

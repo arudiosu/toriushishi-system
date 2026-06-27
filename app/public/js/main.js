@@ -924,6 +924,16 @@ function initPasswordChange() {
     const next = document.getElementById("pwChangeNew");
     const conf = document.getElementById("pwChangeConfirm");
     if (!btn) return;
+
+    // タイトルクリックで開閉
+    const toggle = document.getElementById("pwChangeToggle");
+    const form = document.getElementById("pwChangeForm");
+    toggle?.addEventListener("click", () => {
+        const open = form.style.display === "none";
+        form.style.display = open ? "" : "none";
+        toggle.classList.toggle("open", open);
+    });
+
     btn.addEventListener("click", async () => {
         const setMsg = (text, ok) => { msg.style.color = ok ? "green" : "red"; msg.textContent = text; };
         const c = cur.value.trim(), n = next.value.trim(), cf = conf.value.trim();

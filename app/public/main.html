@@ -776,8 +776,11 @@
         </div>
 
         <div class="otabi-setting-section">
-            <div class="otabi-setting-title">パスワード変更</div>
-            <div class="pw-change-form">
+            <button type="button" class="otabi-setting-title pw-change-toggle" id="pwChangeToggle">
+                <span>パスワード変更</span>
+                <i class="fas fa-chevron-down pw-change-chevron"></i>
+            </button>
+            <div class="pw-change-form" id="pwChangeForm" style="display:none;">
                 <input type="password" id="pwChangeCurrent" class="pw-change-input" placeholder="現在のパスワード" autocomplete="current-password">
                 <input type="password" id="pwChangeNew" class="pw-change-input" placeholder="新しいパスワード（4文字以上）" autocomplete="new-password">
                 <input type="password" id="pwChangeConfirm" class="pw-change-input" placeholder="新しいパスワード（確認）" autocomplete="new-password">

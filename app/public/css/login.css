@@ -146,17 +146,17 @@ body::after {
 
 /* パスワード再発行 */
 .forgot {
-  margin-top: 12px;
+  margin-top: 24px;
   text-align: center;
 }
 .forgot-link {
   background: none;
   border: none;
-  color: #a0a0a0;
-  font-size: .85rem;
+  color: #999;
+  font-size: .72rem;
   text-decoration: underline;
   cursor: pointer;
-  padding: 4px;
+  padding: 2px;
 }
 .forgot-link:hover { color: #e63946; }
 
