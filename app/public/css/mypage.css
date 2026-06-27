@@ -106,3 +106,84 @@
 .mypage-gear-row:last-child { border-bottom: none; }
 .mypage-gear-label { font-size: .88rem; color: var(--text-2); }
 .mypage-gear-val { font-size: .92rem; font-weight: 600; color: var(--text-1); }
+
+/* 子供追加フォーム */
+.mypage-child-hold { opacity: .7; }
+.mypage-child-hold-badge {
+  font-size: .7rem;
+  background: var(--surface-3);
+  color: var(--text-3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.mypage-child-add-open-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  font-size: .88rem;
+  cursor: pointer;
+  text-align: center;
+}
+.mypage-child-add-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+.mypage-child-add-row {
+  display: flex;
+  gap: 8px;
+}
+.mypage-child-add-input {
+  flex: 1;
+  padding: 9px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: .88rem;
+}
+.mypage-child-add-date {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: .88rem;
+  -webkit-appearance: none;
+}
+.mypage-child-add-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.mypage-child-add-cancel-btn {
+  padding: 8px 16px;
+  background: var(--surface-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-size: .88rem;
+  cursor: pointer;
+}
+.mypage-child-add-submit-btn {
+  padding: 8px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+}

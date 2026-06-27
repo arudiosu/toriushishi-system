@@ -112,6 +112,12 @@ async function dispatch(data: Record<string, unknown>): Promise<unknown> {
     case 'deleteChild':
       return deleteChild(data.childId as string, data.userId as string);
 
+    case 'addChild':
+      return addChild(data.userId as string, data.childName as string, data.birthday as string);
+
+    case 'approveChild':
+      return approveChild(data.childId as string);
+
     case 'updateMemberInfo':
       return updateMemberInfo(
         data.targetUserId as string,
@@ -699,6 +705,28 @@ async function deleteChild(childId: string, requestUserId: string) {
 
   await supabase.from('children').update({ status: 'deleted' }).eq('child_id', Number(childId));
   await supabase.from('child_gear').delete().eq('child_id', Number(childId));
+  return { success: true };
+}
+
+async function approveChild(childId: string) {
+  const { error } = await supabase.from('children').update({ status: 'active', updated_at: new Date().toISOString() }).eq('child_id', Number(childId));
+  if (error) return { success: false, msg: error.message };
+  return { success: true };
+}
+
+async function addChild(userId: string, childName: string, birthday: string) {
+  if (!childName?.trim()) return { success: false, msg: '名前を入力してください' };
+  const now = new Date().toISOString();
+  const { error } = await supabase.from('children').insert({
+    user_id: Number(userId),
+    child_name: childName.trim(),
+    birthday: birthday || null,
+    role: 'child',
+    status: 'hold',
+    created_at: now,
+    updated_at: now,
+  });
+  if (error) return { success: false, msg: error.message };
   return { success: true };
 }
 

@@ -51,6 +51,7 @@ function renderMyPage({ user, gear, eventRate, practiceRate, children }, showRat
 
     const roleLabel = user.role === "admin" ? "管理者" : "一般";
     const isAdmin = typeof userRole !== "undefined" && userRole === "admin";
+    const isSelf = String(myPageTargetUserId) === String(userId);
 
     const rateSection = showRate ? `
         <div class="mypage-section">
@@ -101,16 +102,34 @@ function renderMyPage({ user, gear, eventRate, practiceRate, children }, showRat
                     { label: "着物（上）", val: g.kimono_top },
                     { label: "着物（下）", val: g.kimono_bottom },
                 ].filter(r => r.val);
+                const isHold = c.status === "hold";
                 return `
-                <div class="mypage-child-block">
+                <div class="mypage-child-block${isHold ? " mypage-child-hold" : ""}">
                     <div class="mypage-child-header">
-                        <span class="mypage-child-name">${escHtml(c.childName)}</span>
-                        ${isAdmin ? `<button class="mypage-child-del-btn" data-child-id="${c.childId}" data-child-name="${escHtml(c.childName)}">削除</button>` : ""}
+                        <span class="mypage-child-name">${escHtml(c.childName)}${isHold ? ' <span class="mypage-child-hold-badge">承認待ち</span>' : ""}</span>
+                        ${isAdmin ? `
+                            ${isHold ? `<button class="mypage-child-approve-btn" data-child-id="${c.childId}">承認</button>` : ""}
+                            <button class="mypage-child-del-btn" data-child-id="${c.childId}" data-child-name="${escHtml(c.childName)}">削除</button>
+                        ` : ""}
                     </div>
                     ${bd ? `<div class="mypage-gear-row"><span class="mypage-gear-label">生年月日</span><span class="mypage-gear-val">${bd}</span></div>` : ""}
                     ${gearRows.map(r => `<div class="mypage-gear-row"><span class="mypage-gear-label">${escHtml(r.label)}</span><span class="mypage-gear-val">${escHtml(String(r.val))}</span></div>`).join("")}
                 </div>`;
             }).join("") : '<p class="mypage-empty">登録なし</p>'}
+            ${isSelf ? `
+            <div class="mypage-child-add-form" id="myPageChildAddForm" style="display:none;">
+                <div class="mypage-child-add-row">
+                    <input type="text" id="childAddLastName" placeholder="姓" class="mypage-child-add-input">
+                    <input type="text" id="childAddFirstName" placeholder="名" class="mypage-child-add-input">
+                </div>
+                <input type="date" id="childAddBirthday" class="mypage-child-add-date">
+                <div class="mypage-child-add-actions">
+                    <button class="mypage-child-add-cancel-btn" id="childAddCancelBtn">キャンセル</button>
+                    <button class="mypage-child-add-submit-btn" id="childAddSubmitBtn">申請する</button>
+                </div>
+            </div>
+            <button class="mypage-child-add-open-btn" id="childAddOpenBtn">＋ 子供を追加申請</button>
+            ` : ""}
         </div>
 
         <div class="mypage-section">
@@ -159,6 +178,15 @@ function renderMyPage({ user, gear, eventRate, practiceRate, children }, showRat
                 loadMembersUser();
             } else alert(res.msg || "拒否に失敗しました");
         });
+        document.querySelectorAll(".mypage-child-approve-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const childId = btn.dataset.childId;
+                if (!confirm("この子供を承認しますか？")) return;
+                const res = await callGasApi({ action: "approveChild", childId: Number(childId) });
+                if (res.success) { loadMyPageFor(myPageTargetUserId, false); }
+                else alert(res.msg || "承認に失敗しました");
+            });
+        });
         document.querySelectorAll(".mypage-child-del-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 const childId = btn.dataset.childId;
@@ -178,6 +206,36 @@ function renderMyPage({ user, gear, eventRate, practiceRate, children }, showRat
                 document.getElementById("myPageCard").classList.remove("active");
                 loadMembersUser();
             } else alert(res.msg || "削除に失敗しました");
+        });
+    }
+
+    // 子供追加フォーム（自分のマイページのみ）
+    if (isSelf) {
+        const openBtn = document.getElementById("childAddOpenBtn");
+        const form = document.getElementById("myPageChildAddForm");
+        openBtn?.addEventListener("click", () => {
+            form.style.display = "";
+            openBtn.style.display = "none";
+            document.getElementById("childAddLastName").focus();
+        });
+        document.getElementById("childAddCancelBtn")?.addEventListener("click", () => {
+            form.style.display = "none";
+            openBtn.style.display = "";
+            document.getElementById("childAddLastName").value = "";
+            document.getElementById("childAddFirstName").value = "";
+            document.getElementById("childAddBirthday").value = "";
+        });
+        document.getElementById("childAddSubmitBtn")?.addEventListener("click", async () => {
+            const last = document.getElementById("childAddLastName").value.trim();
+            const first = document.getElementById("childAddFirstName").value.trim();
+            const birthday = document.getElementById("childAddBirthday").value;
+            if (!last && !first) { alert("名前を入力してください"); return; }
+            const childName = [last, first].filter(Boolean).join(" ");
+            const res = await callGasApi({ action: "addChild", userId: myPageTargetUserId, childName, birthday: birthday || null });
+            if (res.success) {
+                alert("申請しました。管理者が承認するまでお待ちください。");
+                loadMyPageFor(myPageTargetUserId, true);
+            } else alert(res.msg || "申請に失敗しました");
         });
     }
 }
