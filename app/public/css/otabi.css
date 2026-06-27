@@ -938,3 +938,27 @@
   cursor: pointer;
   white-space: nowrap;
 }
+
+/* お花代グループタブ */
+.otabi-don-tab-bar {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 2px;
+}
+.otabi-don-tab-bar .otabi-don-group-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-3);
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+}
+.otabi-don-tab-bar .otabi-don-group-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}

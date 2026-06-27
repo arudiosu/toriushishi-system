@@ -604,7 +604,7 @@ async function loadOtabiDonations(forceReload = false) {
     document.querySelectorAll(".otabi-don-day-btn").forEach(b =>
         b.classList.toggle("active", b.dataset.day === otabiDonDay));
 
-    // 年が変わった場合・強制リロード時のみアピコール
+    // 年が変わった場合・強制リロード時のみAPIコール
     if (forceReload || otabiDonCachedYear !== otabiYear) {
         const grid = document.getElementById("otabiDonationGrid");
         grid.innerHTML = '<div class="skeleton skeleton-card"></div>';
@@ -613,8 +613,9 @@ async function loadOtabiDonations(forceReload = false) {
         otabiDonCachedYear = otabiYear;
     }
 
+    // 厳密なグループ一致（合同は合同タブのみ）
     otabiDonEntries = otabiDonAllCache
-        .filter(e => (e.group === otabiDonGroup || e.group === "合同") && e.day === otabiDonDay)
+        .filter(e => e.group === otabiDonGroup && e.day === otabiDonDay)
         .sort((a, b) => Number(a.no) - Number(b.no));
     renderOtabiDonations();
 }
@@ -640,13 +641,11 @@ function renderOtabiDonations() {
 
     grid.innerHTML = filteredReg.map((e) => {
         const i = otabiDonEntries.indexOf(e);
-        const isJoint = e.group === "合同";
-        const jointBadge = isJoint ? '<span class="otabi-joint-badge">合同</span>' : '';
         return `
         <div class="otabi-item otabi-don-item">
             <div class="otabi-entry-no">${e.no || '-'}</div>
             <div class="otabi-item-body">
-                <div class="otabi-item-title">${e.place_name || ''}${jointBadge}</div>
+                <div class="otabi-item-title">${e.place_name || ''}</div>
             </div>
             <div class="dg-amount-col">
                 <input type="number" inputmode="numeric" class="dg-input"
@@ -745,8 +744,11 @@ function appendExtraAddForm(grid) {
 
 function updateDonationTotal() {
     const total = otabiDonEntries.reduce((s, e) => s + (Number(e.donation) || 0), 0);
+    const label = otabiDonGroup === "合同"
+        ? `合同・${otabiDonDay} 合計`
+        : `${otabiDonGroup}・${otabiDonDay} 合計`;
     document.getElementById("otabiDonationTotal").innerHTML =
-        `${otabiDonGroup}・${otabiDonDay} 合計 <span>￥${total.toLocaleString()}</span>`;
+        `${label} <span>￥${total.toLocaleString()}</span>`;
 }
 
 let donAutoSaveTimer = null;
