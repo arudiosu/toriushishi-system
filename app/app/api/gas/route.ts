@@ -1,0 +1,1365 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/db';
+import { hashPassword, saveSession, validateSession } from '@/lib/auth';
+
+// -------------------------------------------------------
+// Helpers
+// -------------------------------------------------------
+
+function json(data: unknown, status = 200) {
+  return NextResponse.json(data, { status });
+}
+
+function normalize(name: string) {
+  return String(name).replace(/\s+/g, '');
+}
+
+function formatDate(d: Date | string | null): string {
+  if (!d) return '';
+  const dt = d instanceof Date ? d : new Date(String(d).replace(/\//g, '-'));
+  if (isNaN(dt.getTime())) return String(d);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${y}/${m}/${day}`;
+}
+
+async function sendLineNotification(message: string) {
+  const token = process.env.LINE_TOKEN;
+  const groupId = process.env.LINE_GROUP_ID;
+  if (!token || !groupId) return;
+  try {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        to: groupId,
+        messages: [{ type: 'text', text: message }],
+      }),
+    });
+  } catch (_) {}
+}
+
+// -------------------------------------------------------
+// Route handler
+// -------------------------------------------------------
+
+export async function POST(req: NextRequest) {
+  try {
+    const data = await req.json();
+    const result = await dispatch(data);
+    return json(result);
+  } catch (err: unknown) {
+    return json({ success: false, error: String(err) }, 500);
+  }
+}
+
+async function dispatch(data: Record<string, unknown>): Promise<unknown> {
+  const action = data.action as string;
+
+  switch (action) {
+    // ===== Auth =====
+    case 'login':
+      return loginAPI(data.username as string, data.password as string);
+
+    case 'regist':
+      return registUserAPI(data as Record<string, unknown>);
+
+    case 'validateSession':
+      return validateSession(data.sessionId as string, data.requiredRole as string | undefined);
+
+    // ===== Events =====
+    case 'getEventsWithStats':
+      return { success: true, events: await getEventsWithStats(data.userId as string) };
+
+    case 'getPracticeWithStats':
+      return { success: true, practices: await getPracticeWithStats(data.userId as string) };
+
+    case 'getEventDetailWithUserData':
+      return getEventDetailWithUserData(data.eventId as string, data.userId as string);
+
+    case 'updateEventResponse':
+      return updateEventResponse(
+        data.eventId as string,
+        data.userId as string,
+        (data.status || data.answer) as string
+      );
+
+    case 'updatePracticeResponse':
+      return updatePracticeResponse(
+        data.practiceId as string,
+        data.userId as string,
+        (data.status || data.answer) as string
+      );
+
+    // ===== AI chat =====
+    case 'chatAI':
+      return chatAILocal(data.text as string || data.message as string);
+
+    // ===== Members =====
+    case 'getMembers':
+      return getMembers((data.role as string) || 'user');
+
+    case 'approveMember':
+      return approveMember(data.userId as string);
+
+    case 'deleteMember':
+      return deleteMember(data.userId as string);
+
+    case 'deleteChild':
+      return deleteChild(data.childId as string, data.userId as string);
+
+    case 'updateMemberInfo':
+      return updateMemberInfo(
+        data.targetUserId as string,
+        data.data as Record<string, unknown>,
+        data.userId as string
+      );
+
+    // ===== Events/Practices admin =====
+    case 'saveEvent': {
+      const result = await saveEvent(data.event as Record<string, unknown>);
+      if (result.success && !(data.event as Record<string,unknown>).eventId) {
+        const ev = data.event as Record<string, unknown>;
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        const d = new Date(String(ev.date).replace(/\//g, '-'));
+        const dateStr = `${ev.date}（${weekdays[d.getDay()]}）`;
+        const typeLabel = ev.type === 'festival' ? '🎉' : '📢';
+        const msg = [
+          `${typeLabel} 新しいイベントが登録されました`,
+          ``,
+          `📌 ${ev.title}`,
+          `📅 ${dateStr}${ev.time && ev.time !== '未定' ? ' ' + ev.time : ev.time === '未定' ? ' （時間未定）' : ''}`,
+          ev.deadline ? `回答期限：${ev.deadline}` : '',
+          ``,
+          `アプリから参加・不参加を回答してください。`,
+        ].filter(l => l !== undefined).join('\n');
+        sendLineNotification(msg);
+      }
+      return result;
+    }
+
+    case 'savePractice':
+      return savePractice(data.practice as Record<string, unknown>);
+
+    case 'addPerformance':
+      return addPerformance(data.performance as Record<string, unknown>);
+
+    case 'getPerformanceRoles':
+      return getPerformanceRoles();
+
+    // ===== Otabi places =====
+    case 'getOtabiPlaces':
+      return getOtabiPlaces();
+
+    case 'saveOtabiPlace':
+      return saveOtabiPlace(data.place as Record<string, unknown>);
+
+    case 'deleteOtabiPlace':
+      return deleteOtabiPlace(data.placeId as string);
+
+    case 'getOtabiSchedule':
+      return getOtabiSchedule(data.year as string, data.group as string, data.day as string);
+
+    case 'saveOtabiEntry':
+      return saveOtabiEntry(data.entry as Record<string, unknown>);
+
+    case 'deleteOtabiEntry':
+      return deleteOtabiEntry(data.entryId as string);
+
+    case 'copyOtabiSchedule':
+      return copyOtabiSchedule(data.fromYear as string, data.toYear as string, data.group as string);
+
+    case 'getOtabiDonations':
+      return getOtabiDonations(data.year as string);
+
+    case 'saveOtabiDonations':
+      return saveOtabiDonations(data.donations as Array<Record<string, unknown>>);
+
+    case 'reorderOtabiEntries':
+      return reorderOtabiEntries(data.updates as Array<Record<string, unknown>>);
+
+    case 'markOtabiComplete':
+      return markOtabiComplete(data.entryId as string, data.actualTime as string);
+
+    case 'getOtabiAllProgress':
+      return getOtabiAllProgress(data.year as string, data.day as string);
+
+    // ===== Shishimaru =====
+    case 'getParticipationStats':
+      return getParticipationStats((data.filter as string) || 'event');
+
+    case 'getMemos':
+      return getMemos();
+
+    case 'saveMemo':
+      return saveMemo(data.text as string, data.userId as string);
+
+    case 'deleteMemo':
+      return deleteMemo(data.memoId as string, data.userId as string);
+
+    // ===== Gear =====
+    case 'getGear':
+      return getGear();
+
+    case 'saveGear':
+      return saveGear(data.targetUserId as string, data.gear as Record<string, unknown>, data.userId as string);
+
+    case 'getGearSpare':
+      return getGearSpare();
+
+    case 'upsertGearSpare':
+      return upsertGearSpare(data.item_type as string, data.value as string, Number(data.quantity), data.userId as string);
+
+    case 'saveChildGear':
+      return saveChildGear(data.childId as string, data.gear as Record<string, unknown>, data.userId as string);
+
+    case 'getMyPage':
+      return getMyPage(data.userId as string);
+
+    default:
+      return { success: false, msg: 'unknown action' };
+  }
+}
+
+// -------------------------------------------------------
+// Auth
+// -------------------------------------------------------
+
+async function loginAPI(username: string, password: string) {
+  const hashedInput = hashPassword(password);
+
+  const { data: users, error } = await supabase
+    .from('users')
+    .select('*');
+
+  if (error) return { success: false, msg: 'DB error' };
+
+  const { data: children } = await supabase.from('children').select('*');
+
+  for (const row of users || []) {
+    if (normalize(row.stored_name) === normalize(username) && row.stored_hash === hashedInput) {
+      if (row.status === 'hold') return { success: false, msg: '承認待ちです' };
+      if (row.status === 'deleted') continue;
+
+      const childList = (children || [])
+        .filter((c) => c.user_id === row.user_id)
+        .map((c) => ({
+          childId: c.child_id,
+          childName: c.child_name,
+          role: c.role,
+          status: c.status,
+        }));
+
+      const user = {
+        userId: row.user_id,
+        username: row.stored_name,
+        role: row.role,
+        phone: row.phone || '',
+        prefecture: row.prefecture || '',
+        city: row.city || '',
+        addressDetail: row.address_detail || '',
+        birthday: row.birthday || '',
+        children: childList,
+      };
+
+      const sessionId = await saveSession(user);
+      return { success: true, sessionId, user };
+    }
+  }
+
+  return { success: false, msg: 'ユーザー名またはパスワードが違います' };
+}
+
+async function registUserAPI(form: Record<string, unknown>) {
+  const fullName = `${String(form.lastName || '').trim()} ${String(form.firstName || '').trim()}`;
+
+  // duplicate check
+  const { data: existing } = await supabase
+    .from('users')
+    .select('user_id')
+    .eq('stored_name', fullName)
+    .neq('status', 'deleted');
+
+  if (existing && existing.length > 0) {
+    return { success: false, msg: 'この氏名は既に登録されています。' };
+  }
+
+  // get next userId
+  const { data: last } = await supabase
+    .from('users')
+    .select('user_id')
+    .order('user_id', { ascending: false })
+    .limit(1);
+
+  const newUserId = last && last.length > 0 ? last[0].user_id + 1 : 1;
+  const hashed = hashPassword(form.password as string);
+  const now = new Date().toISOString();
+
+  const { error } = await supabase.from('users').insert({
+    user_id: newUserId,
+    stored_name: fullName,
+    stored_hash: hashed,
+    role: 'user',
+    status: 'hold',
+    position: form.position || '',
+    phone: form.phone || '',
+    prefecture: form.prefecture || '',
+    city: form.city || '',
+    address_detail: form.addressDetail || '',
+    birthday: form.birthDate || null,
+    sns_consent: form.snsConsent ? 'yes' : 'no',
+    created_at: now,
+    updated_at: now,
+  });
+
+  if (error) return { success: false, msg: error.message };
+
+  // children
+  if (Array.isArray(form.children)) {
+    const { data: lastChild } = await supabase
+      .from('children')
+      .select('child_id')
+      .order('child_id', { ascending: false })
+      .limit(1);
+
+    let lastChildId = lastChild && lastChild.length > 0 ? lastChild[0].child_id : 0;
+
+    for (const c of form.children as Array<Record<string, unknown>>) {
+      const first = String(c.firstName || '').trim();
+      if (!first) continue;
+      lastChildId++;
+      await supabase.from('children').insert({
+        child_id: lastChildId,
+        user_id: newUserId,
+        child_name: first,
+        birthday: c.birthday || null,
+        role: 'child',
+        status: 'hold',
+        created_at: now,
+        updated_at: now,
+      });
+    }
+  }
+
+  return { success: true };
+}
+
+// -------------------------------------------------------
+// Events
+// -------------------------------------------------------
+
+async function getEventsWithStats(userId: string) {
+  const uid = Number(userId);
+
+  const [eventsRes, answersRes, usersRes] = await Promise.all([
+    supabase.from('events').select('*').order('date', { ascending: true }),
+    supabase.from('answers_events').select('*'),
+    supabase.from('users').select('user_id,stored_name,status,created_at'),
+  ]);
+
+  const events = eventsRes.data || [];
+  const answers = answersRes.data || [];
+  const users = usersRes.data || [];
+
+  const activeUsers = users.filter((u) => u.status === 'active').map((u) => ({
+    id: u.user_id,
+    name: u.stored_name,
+    createdAt: u.created_at ? new Date(u.created_at) : null,
+  }));
+
+  const answersMap: Record<number, Array<{ userId: number; status: string }>> = {};
+  for (const a of answers) {
+    if (!answersMap[a.event_id]) answersMap[a.event_id] = [];
+    answersMap[a.event_id].push({ userId: a.user_id, status: a.status });
+  }
+
+  return events.map((ev) => {
+    const evDate = new Date(ev.date);
+    const eligibleUsers = activeUsers.filter((u) => !u.createdAt || u.createdAt <= evDate);
+
+    const answerMap: Record<number, string> = {};
+    (answersMap[ev.event_id] || []).forEach((a) => (answerMap[a.userId] = a.status));
+
+    const yesNames: string[] = [];
+    const noNames: string[] = [];
+    let yes = 0, no = 0, na = 0;
+    let myStatus = '未回答';
+
+    eligibleUsers.forEach((u) => {
+      const s = answerMap[u.id];
+      if (!s) { na++; }
+      else if (s === '参加') { yes++; yesNames.push(u.name); }
+      else if (s === '不参加') { no++; noNames.push(u.name); }
+      else { na++; }
+      if (u.id === uid && s) myStatus = s;
+    });
+
+    const answered = new Set([...yesNames, ...noNames]);
+    const naNames = eligibleUsers.filter((u) => !answered.has(u.name)).map((u) => u.name);
+
+    return {
+      eventId: ev.event_id,
+      date: formatDate(ev.date),
+      title: ev.title,
+      type: ev.type,
+      time: ev.time || '',
+      location: ev.location,
+      comment: ev.comment,
+      deadline: ev.deadline,
+      yes, no, na,
+      myStatus,
+      members: { yes: yesNames, no: noNames, na: naNames },
+      sortKey: evDate.getTime(),
+    };
+  });
+}
+
+async function getPracticeWithStats(userId: string) {
+  const uid = Number(userId);
+
+  const [practicesRes, answersRes, usersRes] = await Promise.all([
+    supabase.from('practices').select('*').order('date', { ascending: true }),
+    supabase.from('answers_practices').select('*'),
+    supabase.from('users').select('user_id,stored_name,status'),
+  ]);
+
+  const practices = practicesRes.data || [];
+  const answers = answersRes.data || [];
+  const users = usersRes.data || [];
+
+  const activeUsers = users.filter((u) => u.status === 'active').map((u) => ({
+    id: u.user_id,
+    name: u.stored_name,
+  }));
+
+  const answersMap: Record<number, Array<{ userId: number; status: string }>> = {};
+  for (const a of answers) {
+    if (!answersMap[a.practice_id]) answersMap[a.practice_id] = [];
+    answersMap[a.practice_id].push({ userId: a.user_id, status: a.status });
+  }
+
+  return practices.map((pr) => {
+    const answerMap: Record<number, string> = {};
+    (answersMap[pr.practice_id] || []).forEach((a) => (answerMap[a.userId] = a.status));
+
+    const absent: string[] = [];
+    const late: string[] = [];
+    let myStatus = '';
+
+    activeUsers.forEach((u) => {
+      const s = answerMap[u.id];
+      if (s === '欠席') absent.push(u.name);
+      if (s === '遅刻') late.push(u.name);
+      if (u.id === uid && s) myStatus = s;
+    });
+
+    return {
+      practiceId: pr.practice_id,
+      date: formatDate(pr.date),
+      title: pr.title,
+      type: pr.type,
+      start: pr.start || '',
+      end: pr.end || '',
+      location: pr.location,
+      comment: pr.comment,
+      absent, late, myStatus,
+      sortKey: new Date(pr.date).getTime(),
+    };
+  });
+}
+
+async function getEventDetailWithUserData(eventId: string, userId: string) {
+  const uid = Number(userId);
+
+  const { data: ev } = await supabase.from('events').select('*').eq('event_id', Number(eventId)).single();
+  if (!ev) return { success: false, msg: 'event not found' };
+
+  const { data: answers } = await supabase.from('answers_events').select('*').eq('event_id', Number(eventId));
+  const { data: users } = await supabase.from('users').select('user_id,stored_name,status').eq('status', 'active');
+  const { data: perfs } = await supabase.from('performances').select('*').eq('event_id', Number(eventId));
+
+  const answerMap: Record<number, string> = {};
+  (answers || []).forEach((a) => (answerMap[a.user_id] = a.status));
+
+  const members = (users || []).map((u) => ({
+    userId: u.user_id,
+    name: u.stored_name,
+    status: answerMap[u.user_id] || '',
+  }));
+
+  const myAnswer = answerMap[uid] || '';
+
+  return {
+    success: true,
+    event: { ...ev, eventId: ev.event_id, date: formatDate(ev.date) },
+    members,
+    myAnswer,
+    performances: (perfs || []).map((p) => ({
+      ...p,
+      roles: typeof p.roles === 'string' ? JSON.parse(p.roles) : p.roles,
+    })),
+  };
+}
+
+async function updateEventResponse(eventId: string, userId: string, status: string) {
+  const eid = Number(eventId);
+  const uid = Number(userId);
+  const now = new Date().toISOString();
+
+  const { data: existing } = await supabase
+    .from('answers_events')
+    .select('id')
+    .eq('event_id', eid)
+    .eq('user_id', uid)
+    .single();
+
+  if (existing) {
+    await supabase.from('answers_events').update({ status, updated_at: now }).eq('id', existing.id);
+  } else {
+    await supabase.from('answers_events').insert({ event_id: eid, user_id: uid, status, created_at: now, updated_at: now });
+  }
+
+  const { data: allAnswers } = await supabase.from('answers_events').select('user_id,status').eq('event_id', eid);
+  const { data: activeUsers } = await supabase.from('users').select('user_id,stored_name').eq('status', 'active');
+
+  const answerMap: Record<number, string> = {};
+  (allAnswers || []).forEach((a) => (answerMap[a.user_id] = a.status));
+
+  const yes: string[] = [], no: string[] = [], na: string[] = [];
+  (activeUsers || []).forEach((u) => {
+    const s = answerMap[u.user_id];
+    if (s === '参加') yes.push(u.stored_name);
+    else if (s === '不参加') no.push(u.stored_name);
+    else na.push(u.stored_name);
+  });
+
+  return { success: true, yes, no, na };
+}
+
+async function updatePracticeResponse(practiceId: string, userId: string, status: string) {
+  const pid = Number(practiceId);
+  const uid = Number(userId);
+  const now = new Date().toISOString();
+
+  const { data: existing } = await supabase
+    .from('answers_practices')
+    .select('id')
+    .eq('practice_id', pid)
+    .eq('user_id', uid)
+    .single();
+
+  if (existing) {
+    if (!status) {
+      await supabase.from('answers_practices').delete().eq('id', existing.id);
+    } else {
+      await supabase.from('answers_practices').update({ status, updated_at: now }).eq('id', existing.id);
+    }
+  } else if (status) {
+    await supabase.from('answers_practices').insert({ practice_id: pid, user_id: uid, status, created_at: now, updated_at: now });
+  }
+
+  const { data: allAnswers } = await supabase.from('answers_practices').select('user_id,status').eq('practice_id', pid);
+  const { data: activeUsers } = await supabase.from('users').select('user_id,stored_name').eq('status', 'active');
+
+  const answerMap: Record<number, string> = {};
+  (allAnswers || []).forEach((a) => (answerMap[a.user_id] = a.status));
+
+  const absent: string[] = [], late: string[] = [];
+  (activeUsers || []).forEach((u) => {
+    const s = answerMap[u.user_id];
+    if (s === '欠席') absent.push(u.stored_name);
+    else if (s === '遅刻') late.push(u.stored_name);
+  });
+
+  return { success: true, absent, late };
+}
+
+// -------------------------------------------------------
+// AI chat (local — no LLM call)
+// -------------------------------------------------------
+
+async function chatAILocal(userMessage: string) {
+  const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
+  const msg = (userMessage || '').toLowerCase();
+
+  if (msg.includes('今日') && msg.includes('日')) {
+    return { success: true, reply: `今日は ${today} じゃよ。` };
+  }
+  if (msg.includes('次') && msg.includes('イベント')) {
+    const { data: events } = await supabase.from('events').select('date,title').gte('date', new Date().toISOString()).order('date').limit(1);
+    const e = events && events[0];
+    if (e) return { success: true, reply: `次のイベントは ${formatDate(e.date)} に「${e.title}」があるぞ。` };
+    return { success: true, reply: '今のところ予定はないのう。' };
+  }
+  if (msg.includes('天狗')) return { success: true, reply: '天狗は足が速くてかっこいいんじゃ！' };
+  if (msg.includes('ひょっとこ')) return { success: true, reply: 'ひょっとこは愛嫉たっぷりで人気じゃのう！' };
+  if (msg.includes('こんにちは') || msg.includes('やあ')) return { success: true, reply: 'おう、こんにちは！ししまるじゃ。' };
+
+  return { success: true, reply: 'すまんのう、うまく答えられん質問じゃった…' };
+}
+
+// -------------------------------------------------------
+// Members
+// -------------------------------------------------------
+
+async function getMembers(currentUserRole: string) {
+  const { data: users } = await supabase
+    .from('users')
+    .select('user_id,stored_name,role,status,position')
+    .in('status', ['active', 'hold']);
+
+  const { data: children } = await supabase.from('children').select('child_id,user_id,child_name,status').neq('status', 'deleted');
+
+  const raw = (users || []).map((u) => ({
+    userId: u.user_id,
+    name: u.stored_name,
+    role: u.role,
+    status: u.status,
+    position: u.position || '',
+    children: (children || [])
+      .filter((c) => c.user_id === u.user_id)
+      .map((c) => ({
+        childId: c.child_id,
+        childName: c.child_name,
+        status: u.status === 'hold' ? 'hold' : c.status,
+      })),
+  }));
+
+  if (currentUserRole === 'admin') {
+    const hold = raw.filter((m) => m.status === 'hold');
+    const active = raw.filter((m) => m.status === 'active');
+    return { success: true, members: [...hold, ...active] };
+  }
+
+  return {
+    success: true,
+    members: raw.filter((m) => m.name).map((m) => ({
+      userId: m.userId,
+      name: m.name,
+      status: m.status,
+      position: m.position,
+      children: m.children.map((k) => ({ childName: k.childName })),
+    })),
+  };
+}
+
+async function approveMember(userId: string) {
+  const uid = Number(userId);
+  await supabase.from('users').update({ status: 'active' }).eq('user_id', uid);
+  await supabase.from('children').update({ status: 'active' }).eq('user_id', uid);
+  return { success: true };
+}
+
+async function deleteMember(userId: string) {
+  const uid = Number(userId);
+  await supabase.from('children').update({ status: 'deleted' }).eq('user_id', uid);
+  await supabase.from('users').update({ status: 'deleted' }).eq('user_id', uid);
+  return { success: true };
+}
+
+async function deleteChild(childId: string, requestUserId: string) {
+  const { data: reqUser } = await supabase.from('users').select('role').eq('user_id', Number(requestUserId)).single();
+  if (!reqUser || reqUser.role !== 'admin') return { success: false, msg: '権限がありません' };
+
+  await supabase.from('children').update({ status: 'deleted' }).eq('child_id', Number(childId));
+  await supabase.from('child_gear').delete().eq('child_id', Number(childId));
+  return { success: true };
+}
+
+async function updateMemberInfo(targetUserId: string, data: Record<string, unknown>, requestUserId: string) {
+  const { data: reqUser } = await supabase.from('users').select('role').eq('user_id', Number(requestUserId)).single();
+  if (!reqUser || reqUser.role !== 'admin') return { success: false, msg: '権限がありません' };
+
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const fieldMap: Record<string, string> = {
+    storedName: 'stored_name',
+    phone: 'phone',
+    prefecture: 'prefecture',
+    city: 'city',
+    addressDetail: 'address_detail',
+    birthday: 'birthday',
+    position: 'position',
+  };
+  for (const [jsKey, dbKey] of Object.entries(fieldMap)) {
+    if (data[jsKey] !== undefined) update[dbKey] = data[jsKey];
+  }
+
+  const { error } = await supabase.from('users').update(update).eq('user_id', Number(targetUserId));
+  if (error) return { success: false, msg: error.message };
+  return { success: true };
+}
+
+// -------------------------------------------------------
+// Events / Practices admin
+// -------------------------------------------------------
+
+async function saveEvent(event: Record<string, unknown>) {
+  const now = new Date().toISOString();
+
+  if (event.eventId) {
+    const { error } = await supabase
+      .from('events')
+      .update({
+        date: event.date,
+        title: event.title,
+        type: event.type,
+        time: event.time || '',
+        location: event.location,
+        comment: event.comment,
+        deadline: event.deadline || null,
+        updated_at: now,
+      })
+      .eq('event_id', Number(event.eventId));
+    if (error) return { success: false, message: error.message };
+    return { success: true, eventId: event.eventId, updated: true };
+  }
+
+  const { data: last } = await supabase.from('events').select('event_id').order('event_id', { ascending: false }).limit(1);
+  const newId = last && last.length > 0 ? last[0].event_id + 1 : 1;
+
+  const { error } = await supabase.from('events').insert({
+    event_id: newId,
+    date: event.date,
+    title: event.title,
+    type: event.type,
+    time: event.time || '',
+    location: event.location,
+    comment: event.comment,
+    deadline: event.deadline || null,
+    created_at: now,
+    updated_at: now,
+  });
+  if (error) return { success: false, message: error.message };
+  return { success: true, eventId: newId, created: true };
+}
+
+async function savePractice(practice: Record<string, unknown>) {
+  const now = new Date().toISOString();
+  const { data: last } = await supabase.from('practices').select('practice_id').order('practice_id', { ascending: false }).limit(1);
+  const newId = last && last.length > 0 ? last[0].practice_id + 1 : 1;
+
+  const { error } = await supabase.from('practices').insert({
+    practice_id: newId,
+    date: practice.date,
+    title: practice.title || '練習',
+    type: practice.type || '',
+    start: practice.start || '',
+    end: practice.end || '',
+    location: practice.location || '',
+    comment: practice.comment || '',
+    created_at: now,
+    updated_at: now,
+  });
+  if (error) return { success: false, message: error.message };
+  return { success: true, practiceId: newId, created: true };
+}
+
+async function addPerformance(performance: Record<string, unknown>) {
+  const { data: last } = await supabase.from('performances').select('performance_id').order('performance_id', { ascending: false }).limit(1);
+  const newId = last && last.length > 0 ? last[0].performance_id + 1 : 1;
+  const now = new Date().toISOString();
+
+  const { error } = await supabase.from('performances').insert({
+    performance_id: newId,
+    event_id: performance.eventId,
+    name: performance.name || '',
+    order: performance.order || '',
+    roles: JSON.stringify(performance.roles || {}),
+    created_at: now,
+    updated_at: now,
+  });
+  if (error) return { success: false, message: error.message };
+  return { success: true, performanceId: newId };
+}
+
+async function getPerformanceRoles() {
+  const { data, error } = await supabase.from('performance_roles').select('role_name');
+  if (error) return { success: false, message: error.message };
+  const roles: Record<string, string> = {};
+  (data || []).forEach((r) => { if (r.role_name) roles[r.role_name] = ''; });
+  return { success: true, roles };
+}
+
+// -------------------------------------------------------
+// Otabi places
+// -------------------------------------------------------
+
+async function getOtabiPlaces() {
+  const { data, error } = await supabase.from('otabi_places').select('*').order('place_id');
+  if (error) return { success: false, msg: error.message };
+  return { success: true, places: data || [] };
+}
+
+async function saveOtabiPlace(place: Record<string, unknown>) {
+  const now = new Date().toISOString();
+
+  if (place.place_id) {
+    const { error } = await supabase
+      .from('otabi_places')
+      .update({ name: place.name || '', address: place.address || '', tel: place.tel || '', group: place.group || '' })
+      .eq('place_id', Number(place.place_id));
+    if (error) return { success: false, msg: error.message };
+    return { success: true, place_id: place.place_id };
+  }
+
+  const { data: last } = await supabase.from('otabi_places').select('place_id').order('place_id', { ascending: false }).limit(1);
+  const newId = last && last.length > 0 ? last[0].place_id + 1 : 1;
+
+  const { error } = await supabase.from('otabi_places').insert({
+    place_id: newId,
+    name: place.name || '',
+    address: place.address || '',
+    tel: place.tel || '',
+    group: place.group || '',
+    created_at: now,
+  });
+  if (error) return { success: false, msg: error.message };
+  return { success: true, place_id: newId };
+}
+
+async function deleteOtabiPlace(placeId: string) {
+  const { error } = await supabase.from('otabi_places').delete().eq('place_id', Number(placeId));
+  if (error) return { success: false, msg: error.message };
+  return { success: true };
+}
+
+// -------------------------------------------------------
+// Otabi schedule
+// -------------------------------------------------------
+
+async function getOtabiSchedule(year: string, group: string, day?: string) {
+  let query = supabase
+    .from('otabi_schedules')
+    .select('*')
+    .eq('year', year);
+
+  const { data, error } = await query;
+  if (error) return { success: false, msg: error.message };
+
+  const entries = (data || [])
+    .filter((row) => {
+      const rowGroup = row.group;
+      if (rowGroup !== group && rowGroup !== '合同') return false;
+      if (day && row.day !== day) return false;
+      return true;
+    })
+    .map((row) => {
+      const rowGroup = row.group;
+      let displayNo = row.no;
+      if (rowGroup === '合同') {
+        if (group === '上組' && row.no_ue != null && row.no_ue !== '') displayNo = row.no_ue;
+        else if (group === '下組' && row.no_shita != null && row.no_shita !== '') displayNo = row.no_shita;
+      }
+      return {
+        entry_id: row.entry_id,
+        year: row.year,
+        group: row.group,
+        day: row.day || '土曜',
+        no: displayNo,
+        no_ue: row.no_ue || '',
+        no_shita: row.no_shita || '',
+        time: row.time || '',
+        place_id: row.place_id,
+        place_name: row.place_name,
+        memo: row.memo,
+        donation: Number(row.donation) || 0,
+        actual_time: row.actual_time || '',
+      };
+    })
+    .sort((a, b) => Number(a.no) - Number(b.no));
+
+  return { success: true, entries };
+}
+
+async function saveOtabiEntry(entry: Record<string, unknown>) {
+  const now = new Date().toISOString();
+
+  if (entry.entry_id) {
+    const { error } = await supabase
+      .from('otabi_schedules')
+      .update({
+        group: entry.group || '',
+        day: entry.day || '土曜',
+        no: entry.no || '',
+        no_ue: entry.no_ue || '',
+        no_shita: entry.no_shita || '',
+        time: entry.time || '',
+        place_id: entry.place_id || null,
+        place_name: entry.place_name || '',
+        memo: entry.memo || '',
+        donation: Number(entry.donation) || 0,
+        updated_at: now,
+      })
+      .eq('entry_id', Number(entry.entry_id));
+    if (error) return { success: false, msg: error.message };
+    return { success: true, entry_id: entry.entry_id };
+  }
+
+  const { data: last } = await supabase.from('otabi_schedules').select('entry_id').order('entry_id', { ascending: false }).limit(1);
+  const newId = last && last.length > 0 ? last[0].entry_id + 1 : 1;
+
+  const { error } = await supabase.from('otabi_schedules').insert({
+    entry_id: newId,
+    year: entry.year,
+    group: entry.group || '',
+    day: entry.day || '土曜',
+    no: entry.no || '',
+    no_ue: entry.no_ue || '',
+    no_shita: entry.no_shita || '',
+    time: entry.time || '',
+    place_id: entry.place_id || null,
+    place_name: entry.place_name || '',
+    memo: entry.memo || '',
+    donation: Number(entry.donation) || 0,
+    actual_time: null,
+    created_at: now,
+    updated_at: now,
+  });
+  if (error) return { success: false, msg: error.message };
+  return { success: true, entry_id: newId };
+}
+
+async function deleteOtabiEntry(entryId: string) {
+  const { error } = await supabase.from('otabi_schedules').delete().eq('entry_id', Number(entryId));
+  if (error) return { success: false, msg: error.message };
+  return { success: true };
+}
+
+async function copyOtabiSchedule(fromYear: string, toYear: string, group: string) {
+  const { data: src } = await supabase
+    .from('otabi_schedules')
+    .select('*')
+    .eq('year', fromYear)
+    .eq('group', group);
+
+  if (!src || src.length === 0) {
+    return { success: false, msg: `${fromYear}年の${group}スケジュールが見つかりません` };
+  }
+
+  const { data: last } = await supabase.from('otabi_schedules').select('entry_id').order('entry_id', { ascending: false }).limit(1);
+  let nextId = last && last.length > 0 ? last[0].entry_id + 1 : 1;
+  const now = new Date().toISOString();
+
+  for (const row of src) {
+    await supabase.from('otabi_schedules').insert({
+      entry_id: nextId++,
+      year: toYear,
+      group,
+      day: row.day || '土曜',
+      no: row.no || '',
+      no_ue: row.no_ue || '',
+      no_shita: row.no_shita || '',
+      time: row.time || '',
+      place_id: row.place_id || null,
+      place_name: row.place_name || '',
+      memo: row.memo || '',
+      donation: 0,
+      actual_time: null,
+      created_at: now,
+      updated_at: now,
+    });
+  }
+
+  return { success: true, count: src.length };
+}
+
+async function markOtabiComplete(entryId: string, actualTime: string) {
+  const { error } = await supabase
+    .from('otabi_schedules')
+    .update({ actual_time: actualTime, updated_at: new Date().toISOString() })
+    .eq('entry_id', Number(entryId));
+  if (error) return { success: false, msg: error.message };
+  return { success: true };
+}
+
+async function getOtabiAllProgress(year: string, day?: string) {
+  let query = supabase.from('otabi_schedules').select('*').eq('year', year);
+  if (day) query = query.eq('day', day);
+
+  const { data, error } = await query;
+  if (error) return { success: false, msg: error.message };
+
+  const rawGroups: Record<string, unknown[]> = {};
+  const jointEntries: unknown[] = [];
+
+  (data || []).forEach((row) => {
+    const group = row.group;
+    const entry = {
+      entry_id: row.entry_id,
+      no: row.no,
+      no_ue: row.no_ue || '',
+      no_shita: row.no_shita || '',
+      time: row.time || '',
+      place_name: row.place_name,
+      actual_time: row.actual_time || '',
+      is_joint: group === '合同',
+    };
+    if (group === '合同') {
+      jointEntries.push(entry);
+    } else {
+      if (!rawGroups[group]) rawGroups[group] = [];
+      rawGroups[group].push(entry);
+    }
+  });
+
+  const targetGroups = Object.keys(rawGroups).length > 0
+    ? Object.keys(rawGroups)
+    : jointEntries.length > 0 ? ['上組', '下組'] : [];
+
+  const result: Record<string, unknown[]> = {};
+  targetGroups.forEach((g) => {
+    const joints = (jointEntries as Array<Record<string, unknown>>).map((e) => {
+      const displayNo = g === '上組' && e.no_ue !== '' ? e.no_ue
+        : g === '下組' && e.no_shita !== '' ? e.no_shita
+        : e.no;
+      return { ...e, no: displayNo };
+    });
+    result[g] = [...(rawGroups[g] || []) as Array<Record<string,unknown>>, ...joints]
+      .sort((a: unknown, b: unknown) => Number((a as Record<string,unknown>).no) - Number((b as Record<string,unknown>).no));
+  });
+
+  return { success: true, groups: result };
+}
+
+async function getOtabiDonations(year: string) {
+  const { data, error } = await supabase
+    .from('otabi_schedules')
+    .select('entry_id,group,day,no,time,place_name,memo,donation')
+    .eq('year', year)
+    .order('group')
+    .order('day')
+    .order('no');
+
+  if (error) return { success: false, msg: error.message };
+
+  const entries = (data || []).map((row) => ({
+    entry_id: row.entry_id,
+    group: row.group,
+    day: row.day || '土曜',
+    no: row.no,
+    time: row.time || '',
+    place_name: row.place_name,
+    memo: row.memo,
+    donation: Number(row.donation) || 0,
+  }));
+
+  const total = entries.reduce((s, e) => s + e.donation, 0);
+  const byGroup: Record<string, number> = {};
+  entries.forEach((e) => { byGroup[e.group] = (byGroup[e.group] || 0) + e.donation; });
+
+  return { success: true, entries, total, byGroup };
+}
+
+async function saveOtabiDonations(donations: Array<Record<string, unknown>>) {
+  const now = new Date().toISOString();
+  let count = 0;
+  for (const d of donations || []) {
+    const { error } = await supabase
+      .from('otabi_schedules')
+      .update({ donation: Number(d.donation) || 0, updated_at: now })
+      .eq('entry_id', Number(d.entry_id));
+    if (!error) count++;
+  }
+  return { success: true, count };
+}
+
+async function reorderOtabiEntries(updates: Array<Record<string, unknown>>) {
+  const now = new Date().toISOString();
+  for (const u of updates || []) {
+    await supabase.from('otabi_schedules').update({ no: u.no, updated_at: now }).eq('entry_id', Number(u.entry_id));
+  }
+  return { success: true, count: updates.length };
+}
+
+// -------------------------------------------------------
+// Participation stats
+// -------------------------------------------------------
+
+async function getParticipationStats(filter: string) {
+  const { data: usersData } = await supabase.from('users').select('user_id,stored_name,created_at').eq('status', 'active');
+  const members = (usersData || []).map((u) => ({
+    userId: u.user_id,
+    name: u.stored_name,
+    createdAt: u.created_at ? new Date(u.created_at) : null,
+  }));
+
+  if (filter === 'practice') {
+    const { data: practices } = await supabase.from('practices').select('practice_id,date');
+    const { data: answers } = await supabase.from('answers_practices').select('user_id,practice_id,status');
+
+    const stats = members.map((m) => {
+      const eligible = (practices || []).filter((p) => !m.createdAt || new Date(p.date) >= m.createdAt);
+      const total = eligible.length;
+      if (!total) return { name: m.name, participated: 0, total: 0, rate: 0 };
+      const eligibleIds = new Set(eligible.map((p) => p.practice_id));
+      const absent = (answers || []).filter((a) =>
+        a.user_id === m.userId &&
+        (a.status === '欠席' || a.status === '遅刻') &&
+        eligibleIds.has(a.practice_id)
+      ).length;
+      const participated = total - absent;
+      return { name: m.name, participated, total, rate: participated / total };
+    });
+
+    stats.sort((a, b) => b.rate - a.rate);
+    return { success: true, stats };
+  }
+
+  // event stats
+  const { data: events } = await supabase.from('events').select('event_id,date');
+  const { data: answers } = await supabase.from('answers_events').select('user_id,event_id,status');
+
+  const stats = members.map((m) => {
+    const eligible = (events || []).filter((ev) => !m.createdAt || new Date(ev.date) >= m.createdAt);
+    const total = eligible.length;
+    if (!total) return { name: m.name, participated: 0, total: 0, rate: 0 };
+    const eligibleIds = new Set(eligible.map((ev) => ev.event_id));
+    const participated = (answers || []).filter((a) =>
+      a.user_id === m.userId && a.status === '参加' && eligibleIds.has(a.event_id)
+    ).length;
+    return { name: m.name, participated, total, rate: participated / total };
+  });
+
+  stats.sort((a, b) => b.rate - a.rate);
+  return { success: true, stats };
+}
+
+// -------------------------------------------------------
+// Memos
+// -------------------------------------------------------
+
+async function getMemos() {
+  const { data, error } = await supabase.from('memos').select('*').order('created_at', { ascending: false });
+  if (error) return { success: false, msg: error.message };
+  return { success: true, memos: (data || []).map((m) => ({ ...m, memo_id: m.memo_id, date: m.created_at })) };
+}
+
+async function saveMemo(text: string, userId: string) {
+  const { data: userRow } = await supabase.from('users').select('stored_name').eq('user_id', Number(userId)).single();
+  const userName = userRow?.stored_name || '名無し';
+  const now = new Date().toISOString();
+  const memoId = Date.now();
+
+  const { error } = await supabase.from('memos').insert({
+    memo_id: memoId,
+    user_id: Number(userId),
+    user_name: userName,
+    text,
+    created_at: now,
+  });
+  if (error) return { success: false, msg: error.message };
+  return { success: true, memo_id: memoId };
+}
+
+async function deleteMemo(memoId: string, userId: string) {
+  const { data: memo } = await supabase.from('memos').select('user_id').eq('memo_id', Number(memoId)).single();
+  if (!memo) return { success: false, msg: 'not found' };
+
+  const { data: userRow } = await supabase.from('users').select('role').eq('user_id', Number(userId)).single();
+  const isAdmin = userRow?.role === 'admin';
+
+  if (memo.user_id !== Number(userId) && !isAdmin) return { success: false, msg: '権限がありません' };
+
+  const { error } = await supabase.from('memos').delete().eq('memo_id', Number(memoId));
+  if (error) return { success: false, msg: error.message };
+  return { success: true };
+}
+
+// -------------------------------------------------------
+// Gear
+// -------------------------------------------------------
+
+const GEAR_COLS = ['happi_no', 'tshirt_size', 'tekkou', 'hakama', 'kimono_top', 'kimono_bottom', 'memo'];
+
+async function isAdmin(userId: string): Promise<boolean> {
+  const { data } = await supabase.from('users').select('role').eq('user_id', Number(userId)).single();
+  return data?.role === 'admin';
+}
+
+async function getGear() {
+  const [usersRes, gearRes, childrenRes, childGearRes] = await Promise.all([
+    supabase.from('users').select('user_id,stored_name,role').eq('status', 'active'),
+    supabase.from('member_gear').select('*'),
+    supabase.from('children').select('child_id,user_id,child_name').neq('status', 'deleted'),
+    supabase.from('child_gear').select('*'),
+  ]);
+
+  const gearMap: Record<string, Record<string, unknown>> = {};
+  (gearRes.data || []).forEach((r) => {
+    const obj: Record<string, unknown> = {};
+    GEAR_COLS.forEach((col) => { obj[col] = r[col] ?? ''; });
+    gearMap[String(r.user_id)] = obj;
+  });
+
+  const childGearMap: Record<string, { kimono_top: string; kimono_bottom: string }> = {};
+  (childGearRes.data || []).forEach((r) => {
+    childGearMap[String(r.child_id)] = { kimono_top: r.kimono_top ?? '', kimono_bottom: r.kimono_bottom ?? '' };
+  });
+
+  const childrenByUser: Record<string, Array<{ childId: number; childName: string }>> = {};
+  (childrenRes.data || []).forEach((c) => {
+    const uid = String(c.user_id);
+    if (!childrenByUser[uid]) childrenByUser[uid] = [];
+    childrenByUser[uid].push({ childId: c.child_id, childName: c.child_name });
+  });
+
+  return {
+    success: true,
+    members: (usersRes.data || []).map((u) => ({
+      userId: String(u.user_id),
+      name: u.stored_name,
+      role: u.role,
+      gear: gearMap[String(u.user_id)] || {},
+      children: (childrenByUser[String(u.user_id)] || []).map((c) => ({
+        ...c,
+        gear: childGearMap[String(c.childId)] || {},
+      })),
+    })),
+  };
+}
+
+async function saveGear(targetUserId: string, gear: Record<string, unknown>, requestUserId: string) {
+  if (!(await isAdmin(requestUserId))) return { success: false, msg: '権限がありません' };
+
+  const { data: existing } = await supabase.from('member_gear').select('id').eq('user_id', Number(targetUserId)).single();
+
+  const gearData: Record<string, unknown> = { user_id: Number(targetUserId) };
+  GEAR_COLS.forEach((col) => { gearData[col] = gear[col] ?? ''; });
+
+  if (existing) {
+    await supabase.from('member_gear').update(gearData).eq('id', existing.id);
+  } else {
+    await supabase.from('member_gear').insert(gearData);
+  }
+
+  return { success: true };
+}
+
+async function getGearSpare() {
+  const { data: items } = await supabase.from('gear_spare').select('*');
+  const { data: gearRows } = await supabase.from('member_gear').select('tshirt_size');
+
+  const tshirtUsage: Record<string, number> = {};
+  (gearRows || []).forEach((r) => {
+    const size = String(r.tshirt_size || '').trim();
+    if (size) tshirtUsage[size] = (tshirtUsage[size] || 0) + 1;
+  });
+
+  const result = (items || []).map((r) => ({
+    item_type: r.item_type,
+    value: String(r.value),
+    quantity: Number(r.quantity) || 0,
+    ...(r.item_type === 'Tシャツ' ? { member_count: tshirtUsage[String(r.value)] || 0 } : {}),
+  }));
+
+  // Add tshirt sizes used by members but not in master
+  Object.entries(tshirtUsage).forEach(([size, count]) => {
+    if (!result.find((i) => i.item_type === 'Tシャツ' && i.value === size)) {
+      result.push({ item_type: 'Tシャツ', value: size, quantity: 0, member_count: count });
+    }
+  });
+
+  return { success: true, items: result };
+}
+
+async function upsertGearSpare(item_type: string, value: string, quantity: number, requestUserId: string) {
+  if (!(await isAdmin(requestUserId))) return { success: false, msg: '権限がありません' };
+  if (!['Tシャツ', '手甲'].includes(item_type)) return { success: false, msg: '不正な種別' };
+
+  const { data: existing } = await supabase
+    .from('gear_spare')
+    .select('id')
+    .eq('item_type', item_type)
+    .eq('value', value)
+    .single();
+
+  if (existing) {
+    if (quantity <= 0) {
+      await supabase.from('gear_spare').delete().eq('id', existing.id);
+    } else {
+      await supabase.from('gear_spare').update({ quantity }).eq('id', existing.id);
+    }
+  } else if (quantity > 0) {
+    await supabase.from('gear_spare').insert({ item_type, value, quantity });
+  }
+
+  return { success: true };
+}
+
+async function saveChildGear(childId: string, gear: Record<string, unknown>, requestUserId: string) {
+  if (!(await isAdmin(requestUserId))) return { success: false, msg: '権限がありません' };
+
+  const { data: existing } = await supabase.from('child_gear').select('id').eq('child_id', Number(childId)).single();
+
+  const gearData = { child_id: Number(childId), kimono_top: gear.kimono_top ?? '', kimono_bottom: gear.kimono_bottom ?? '' };
+
+  if (existing) {
+    await supabase.from('child_gear').update(gearData).eq('id', existing.id);
+  } else {
+    await supabase.from('child_gear').insert(gearData);
+  }
+
+  return { success: true };
+}
+
+// -------------------------------------------------------
+// My page
+// -------------------------------------------------------
+
+async function getMyPage(userId: string) {
+  const uid = Number(userId);
+
+  const [userRes, gearRes, eventsRes, ansEventsRes, practicesRes, ansPracticesRes] = await Promise.all([
+    supabase.from('users').select('*').eq('user_id', uid).single(),
+    supabase.from('member_gear').select('*').eq('user_id', uid).single(),
+    supabase.from('events').select('event_id,date'),
+    supabase.from('answers_events').select('event_id,status').eq('user_id', uid),
+    supabase.from('practices').select('practice_id,date'),
+    supabase.from('answers_practices').select('practice_id,status').eq('user_id', uid),
+  ]);
+
+  if (!userRes.data) return { success: false, msg: 'user not found' };
+  const u = userRes.data;
+
+  const user = {
+    name: u.stored_name,
+    role: u.role,
+    position: u.position || '',
+    phone: u.phone || '',
+    prefecture: u.prefecture || '',
+    city: u.city || '',
+    addressDetail: u.address_detail || '',
+    birthday: u.birthday ? new Date(u.birthday).toISOString().slice(0, 10) : '',
+    createdAt: u.created_at,
+  };
+
+  const gear: Record<string, unknown> = {};
+  if (gearRes.data) GEAR_COLS.forEach((col) => { gear[col] = gearRes.data![col] ?? ''; });
+
+  // Event rate
+  const userCreated = user.createdAt ? new Date(user.createdAt) : null;
+  const eligibleEvents = (eventsRes.data || []).filter((ev) => !userCreated || new Date(ev.date) >= userCreated);
+  const eventAnswers = new Map((ansEventsRes.data || []).map((a) => [a.event_id, a.status]));
+  const eventParticipated = eligibleEvents.filter((ev) => eventAnswers.get(ev.event_id) === '参加').length;
+  const eventRate = eligibleEvents.length > 0
+    ? { participated: eventParticipated, total: eligibleEvents.length, rate: eventParticipated / eligibleEvents.length }
+    : null;
+
+  // Practice rate
+  const eligiblePractices = (practicesRes.data || []).filter((p) => !userCreated || new Date(p.date) >= userCreated);
+  const practiceAnswers = new Map((ansPracticesRes.data || []).map((a) => [a.practice_id, a.status]));
+  const absent = eligiblePractices.filter((p) => {
+    const s = practiceAnswers.get(p.practice_id);
+    return s === '欠席' || s === '遅刻';
+  }).length;
+  const practiceParticipated = eligiblePractices.length - absent;
+  const practiceRate = eligiblePractices.length > 0
+    ? { participated: practiceParticipated, total: eligiblePractices.length, rate: practiceParticipated / eligiblePractices.length }
+    : null;
+
+  return { success: true, user, gear, eventRate, practiceRate };
+}

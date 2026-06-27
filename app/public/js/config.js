@@ -1,6 +1,6 @@
 
-// GAS URL
-window.GAS_URL = "https://script.google.com/macros/s/AKfycbyzeUMTM_AK_8v00OUNz_BivDg-tL8GBhQclvMkUjLO5v60Xy4MlfyNjBev1xMT4gEj/exec";
+// API URL (Vercel Next.js — replaces Google Apps Script)
+window.GAS_URL = "/api/gas";
 
 /* =======================================================
 共通 API 呼び出し関数 (CORS回避 & 共通化)
