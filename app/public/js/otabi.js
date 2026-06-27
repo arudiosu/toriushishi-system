@@ -687,6 +687,7 @@ function renderOtabiDonations() {
             otabiDonEntries[entryIdx].donation = Number(input.value) || 0;
             updateDonationTotal();
         });
+        input.addEventListener("blur", () => autoSaveDonation(input));
         input.addEventListener("keydown", ev => {
             if (ev.key === "Enter" || ev.key === "ArrowDown") {
                 ev.preventDefault();
@@ -746,6 +747,30 @@ function updateDonationTotal() {
     const total = otabiDonEntries.reduce((s, e) => s + (Number(e.donation) || 0), 0);
     document.getElementById("otabiDonationTotal").innerHTML =
         `${otabiDonGroup}・${otabiDonDay} 合計 <span>￥${total.toLocaleString()}</span>`;
+}
+
+let donAutoSaveTimer = null;
+function autoSaveDonation(input) {
+    clearTimeout(donAutoSaveTimer);
+    donAutoSaveTimer = setTimeout(async () => {
+        const entryIdx = Number(input.dataset.idx);
+        const entry = otabiDonEntries[entryIdx];
+        if (!entry) return;
+        const payload = entry.extra
+            ? { extra: true, extra_id: entry.extra_id, donation: Number(entry.donation) || 0 }
+            : { entry_id: entry.entry_id, donation: Number(entry.donation) || 0 };
+        const btn = document.getElementById("saveDonationsBtn");
+        const orig = btn?.textContent;
+        if (btn) { btn.textContent = "保存中…"; btn.disabled = true; }
+        try {
+            await callGasApi({ action: "saveOtabiDonations", donations: [payload] });
+            const cached = otabiDonAllCache.find(e => entry.extra ? e.extra_id === entry.extra_id : e.entry_id === entry.entry_id);
+            if (cached) cached.donation = entry.donation;
+            if (btn) { btn.textContent = "保存済み ✓"; setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1200); }
+        } catch {
+            if (btn) { btn.textContent = orig; btn.disabled = false; }
+        }
+    }, 600);
 }
 
 async function saveOtabiDonations() {
